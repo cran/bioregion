@@ -1,43 +1,143 @@
+# Controls #####################################################################
 controls <- function(args = NULL, data = NULL, type = "input_net") {
   
   # Input similarity ##########################################################
   if (type == "input_similarity") {
-    if (inherits(data, "bioregion.pairwise.metric")) {
-      if (attr(data, "type") == "dissimilarity") {
-        stop(paste0(deparse(substitute(data)),
-                    " seems to be a dissimilarity object. 
+    if(!inherits(data, "bioregion.pairwise.metric")) {
+     message(paste0(deparse(substitute(data)),
+                     " is not a bioregion.pairwise.metric object. 
+Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
+others similarity metrics (netclu_). 
+Please carefully check your data before using the clustering functions."))
+    }else{
+      if(is.null(attr(data, "type"))){
+        message(paste0(deparse(substitute(data)),
+                       " is a bioregion.pairwise.metric object but it has not 
+been possible to identify the object's type (similarity or dissimilarity) 
+probably because the bioregion.pairwise.metric object has been altered.
+Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
+others similarity metrics (netclu_). 
+Please carefully check your data before using the clustering functions."))
+      }else{
+        if (attr(data, "type") == "dissimilarity") {
+          stop(paste0(deparse(substitute(data)),
+                      " seems to be a dissimilarity object. 
 This function should be applied on similarities, not dissimilarities. 
 Use dissimilarity_to_similarity() before using this function."), call. = FALSE)
+        }
       }
-    } else {
-      message(paste0(deparse(substitute(data)),
-                     " is not a bioregion.pairwise.metric object. 
-Note that some functions required dissimilarity metrics (hclu_ & nhclu) and
-others similarity metrics (netclu_). 
-Please carefully check your data before using the clustering functions."),
-              call. = FALSE)
     }
   }
   
   # Input dissimilarity #######################################################
   if (type == "input_dissimilarity") {
-    if (inherits(data, "bioregion.pairwise.metric")) {
-      if (attr(data, "type") == "similarity") {
-        stop(paste0(deparse(substitute(data)),
-                    " seems to be a similarity object.
-This function should be applied on dissimilarities, not similarities.
-Use similarity_to_dissimilarity() before using this function."),
-             call. = FALSE
-        )
-      }
-    } else {
+    if(!inherits(data, "bioregion.pairwise.metric")) {
       message(paste0(deparse(substitute(data)),
                      " is not a bioregion.pairwise.metric object. 
-Note that some functions required dissimilarity metrics (hclu_ & nhclu) and
+Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
 others similarity metrics (netclu_). 
 Please carefully check your data before using the clustering functions."))
+    }else{
+      if(is.null(attr(data, "type"))){
+        message(paste0(deparse(substitute(data)),
+                       " is a bioregion.pairwise.metric object but it has not 
+been possible to identify the object's type (similarity or dissimilarity) 
+probably because the bioregion.pairwise.metric object has been altered.
+Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
+others similarity metrics (netclu_). 
+Please carefully check your data before using the clustering functions."))
+      }else{
+        if (attr(data, "type") == "similarity") {
+          stop(paste0(deparse(substitute(data)),
+                      " seems to be a dissimilarity object. 
+This function should be applied on dissimilarities, not similarities. 
+Use similarity_to_dissimilarity() before using this function."), call. = FALSE)
+        }
+      }
     }
   }
+  
+  # Input conversion similarity ################################################
+  if (type == "input_conversion_similarity") {
+    if (!inherits(data, "bioregion.pairwise.metric")) {
+      stop(paste0(deparse(substitute(data)), 
+                  " should be a bioregion.pairwise.metric object created by 
+similarity() or dissimilarity_to_similarity()"),
+                  call. = FALSE)
+    }
+    if(is.null(attr(data, "type"))){
+      stop(paste0(deparse(substitute(data)),
+                     " is a bioregion.pairwise.metric object but it has not 
+been possible to identify the object's type (similarity or dissimilarity) 
+probably because the bioregion.pairwise.metric object has been altered."),
+           call. = FALSE)
+    }
+    if (attr(data, "type") == "dissimilarity") {
+      stop(paste0(deparse(substitute(data)), " is already composed of 
+dissimilarity metrics. If you want to convert it to similarity, use 
+dissimilarity_to_similarity()"),
+           call. = FALSE)
+    }
+    if (!is.data.frame(data)) {
+      stop(paste0(deparse(substitute(data)), " must be a data.frame."),
+           call. = FALSE)
+    }
+    if (dim(data)[2] < 2) {
+      stop(paste0(deparse(substitute(data)),
+                  " must be a data.frame with at least two columns."),
+           call. = FALSE)
+    }
+    nbna <- sum(is.na(data))
+    if (nbna > 0) {
+      stop("NA(s) detected in the data.frame!", call. = FALSE)
+    }
+    for(k in 3:dim(data)[2]){
+      if (!is.numeric(data[, k])) {
+        stop("The (dis)similarity metric(s) must be numeric.", call. = FALSE)
+      }
+    }
+  }
+  
+  # Input conversion dissimilarity ################################################
+  if (type == "input_conversion_dissimilarity") {
+    if (!inherits(data, "bioregion.pairwise.metric")) {
+      stop(paste0(deparse(substitute(data)), 
+                  " should be a bioregion.pairwise.metric object created by 
+similarity() or dissimilarity_to_similarity()"),
+           call. = FALSE)
+    }
+    if(is.null(attr(data, "type"))){
+      stop(paste0(deparse(substitute(data)),
+                  " is a bioregion.pairwise.metric object but it has not 
+been possible to identify the object's type (similarity or dissimilarity) 
+probably because the bioregion.pairwise.metric object has been altered."),
+           call. = FALSE)
+    }
+    if (attr(data, "type") == "similarity") {
+      stop(paste0(deparse(substitute(data)), " is already composed of 
+similarity metrics. If you want to convert it to dissimilarity, use 
+similarity_to_dissimilarity()"),
+           call. = FALSE)
+    }
+    if (!is.data.frame(data)) {
+      stop(paste0(deparse(substitute(data)), " must be a data.frame."),
+           call. = FALSE)
+    }
+    if (dim(data)[2] < 2) {
+      stop(paste0(deparse(substitute(data)),
+                  " must be a data.frame with at least two columns."),
+           call. = FALSE)
+    }
+    nbna <- sum(is.na(data))
+    if (nbna > 0) {
+      stop("NA(s) detected in the data.frame!", call. = FALSE)
+    }
+    for(k in 3:dim(data)[2]){
+      if (!is.numeric(data[, k])) {
+        stop("The (dis)similarity metric(s) must be numeric.", call. = FALSE)
+      }
+    }
+  }  
   
   # Input network #############################################################
   if (type == "input_net") {
@@ -332,8 +432,9 @@ Please carefully check your data before using the clustering functions."))
       stop(paste0(deparse(substitute(args)), " must be numeric."),
            call. = FALSE)
     } else {
-      if (args < 0) {
-        stop(paste0(deparse(substitute(args)), " must be higher than 0."),
+      if (sum(args < 0) > 0) {
+        stop(paste0(deparse(substitute(args)), " must be composed of value 
+                    higher than 0."),
              call. = FALSE
         )
       }
@@ -364,9 +465,10 @@ Please carefully check your data before using the clustering functions."))
       stop(paste0(deparse(substitute(args)), " must be numeric."),
            call. = FALSE)
     } else {
-      if (args <= 0) {
+      if (sum(args <= 0) > 0) {
         stop(paste0(deparse(substitute(args)),
-                    " must be strictly higher than 0."), call. = FALSE)
+                    " must be composed of value strictly higher than 0."),
+             call. = FALSE)
       }
     }
   }
@@ -396,8 +498,8 @@ Please carefully check your data before using the clustering functions."))
       stop(paste0(deparse(substitute(args)), " must be numeric."),
            call. = FALSE)
     } else {
-      if (args %% 1 != 0) {
-        stop(paste0(deparse(substitute(args)), " must be an integer."),
+      if (sum(args %% 1 != 0) > 0) {
+        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
              call. = FALSE
         )
       }
@@ -435,13 +537,14 @@ Please carefully check your data before using the clustering functions."))
       stop(paste0(deparse(substitute(args)), " must be numeric."),
            call. = FALSE)
     } else {
-      if (args %% 1 != 0) {
-        stop(paste0(deparse(substitute(args)), " must be an integer."),
+      if (sum(args %% 1 != 0) > 0) {
+        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
              call. = FALSE
         )
       } else {
-        if (args < 0) {
-          stop(paste0(deparse(substitute(args)), " must be higher than 0."),
+        if (sum(args < 0) > 0) {
+          stop(paste0(deparse(substitute(args)), " must be composed of value 
+                      higher than 0."),
                call. = FALSE
           )
         }
@@ -479,20 +582,23 @@ Please carefully check your data before using the clustering functions."))
       stop(paste0(deparse(substitute(args)), " must be numeric."),
            call. = FALSE)
     } else {
-      if (args %% 1 != 0) {
-        stop(paste0(deparse(substitute(args)), " must be an integer."),
+      if (sum(args %% 1 != 0) > 0) {
+        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
              call. = FALSE
         )
       } else {
-        if (args <= 0) {
+        if (sum(args <= 0) > 0) {
           stop(paste0(deparse(substitute(args)),
-                      " must be strictly higher than 0."), call. = FALSE)
+                      " must be composed of value strictly higher than 0."), 
+               call. = FALSE)
         }
       }
     }
   }
 }
 
+# Additional functions #########################################################
+# reformat_hierarchy
 reformat_hierarchy <- function(input, algo = "infomap", integerize = FALSE) {
   
   # Input
@@ -550,6 +656,7 @@ reformat_hierarchy <- function(input, algo = "infomap", integerize = FALSE) {
   return(output)
 }
 
+# knbclu
 knbclu <- function(partitions, method = "length",
                    reorder = TRUE, rename_duplicates = TRUE) {
   
@@ -600,7 +707,8 @@ knbclu <- function(partitions, method = "length",
   partitions
 }
 
-# From https://stackoverflow.com/questions/7659891/r-make-unique-starting-in-1
+# make.unique.2
+# from https://stackoverflow.com/questions/7659891/r-make-unique-starting-in-1
 make.unique.2 <- function(x, sep = ".") {
   stats::ave(x, x, FUN = function(a) {
     if (length(a) > 1) {
@@ -610,3 +718,11 @@ make.unique.2 <- function(x, sep = ".") {
     }
   })
 }
+
+
+
+
+
+
+
+

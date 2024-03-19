@@ -16,6 +16,9 @@
 #'
 #' @param lang a string indicating what version of Louvain should be used
 #' (igraph or Cpp, see Details).
+#' 
+#' @param resolution a resolution parameter to adjust the modularity 
+#' (1 is chosen by default, see Details).
 #'
 #' @param q the quality function used to compute partition of the graph
 #' (modularity is chosen by default, see Details).
@@ -37,7 +40,7 @@
 #'
 #' @param return_node_type a `character` indicating what types of nodes
 #' ("sites", "species" or "both") should be returned in the output
-#' (`keep_nodes_type="both"` by default).
+#' (`return_node_type = "both"` by default).
 #'
 #' @param binpath a `character` indicating the path to the bin folder
 #' (see [install_binaries] and Details).
@@ -59,7 +62,16 @@
 #' [igraph](https://cran.r-project.org/package=igraph)
 #' implementation ([cluster_louvain][igraph::cluster_louvain]) and the C++
 #' implementation (<https://sourceforge.net/projects/louvain/>, version 0.3).
-#' The latest offers the possibility to choose among several quality functions,
+#' 
+#' The [igraph](https://cran.r-project.org/package=igraph)
+#' implementation offers the possibility to adjust the resolution parameter of 
+#' the modularity function (`resolution` argument) that the algorithm uses 
+#' internally. Lower values typically yield fewer, larger clusters. The original
+#' definition of modularity is recovered when the resolution parameter 
+#' is set to 1 (by default).
+#' 
+#' The C++ implementation offers the possibility to choose among several 
+#' quality functions,
 #' `q = 0` for the classical Newman-Girvan criterion (also called
 #' "Modularity"), 1 for the Zahn-Condorcet criterion, 2 for the
 #' Owsinski-Zadrozny criterion (you should specify the value of the parameter
@@ -135,12 +147,15 @@
 #' @references
 #' \insertRef{Blondel2008}{bioregion}
 #'
+#' @importFrom igraph graph_from_data_frame cluster_louvain
+#'
 #' @export
 
 netclu_louvain <- function(net,
                            weight = TRUE,
                            index = names(net)[3],
                            lang = "Cpp",
+                           resolution = 1,
                            q = 0,
                            c = 0.5,
                            k = 1,
@@ -153,8 +168,12 @@ netclu_louvain <- function(net,
                            delete_temp = TRUE,
                            algorithm_in_output = TRUE) {
   
-  # Control input net
-  controls(args = NULL, data = net, type = "input_bioregion.pairwise.metric")
+  # Control input net (+ check similarity if not bipartite)
+  controls(args = bipartite, data = NULL, type = "boolean")
+  isbip <- bipartite
+  if(!isbip){
+    controls(args = NULL, data = net, type = "input_similarity")
+  }
   controls(args = NULL, data = net, type = "input_net")
 
   # Control input weight & index
@@ -167,8 +186,6 @@ netclu_louvain <- function(net,
   }
 
   # Control input bipartite
-  controls(args = bipartite, data = NULL, type = "boolean")
-  isbip <- bipartite
   if (isbip) {
     controls(args = NULL, data = net, type = "input_net_bip")
     controls(args = site_col, data = net, type = "input_net_bip_col")
@@ -187,6 +204,7 @@ both, sites and species", call. = FALSE)
     stop("Please choose lang among the following values:
 Cpp, igraph", call. = FALSE)
   }
+  controls(args = resolution, data = NULL, type = "strict_positive_numeric")
   controls(args = q, data = NULL, type = "positive_integer")
   controls(args = c, data = NULL, type = "strict_positive_numeric")
   if (c > 1) {
@@ -239,6 +257,7 @@ The bipartite argument should probably be set to TRUE.")
     weight = weight,
     index = index,
     lang = lang,
+    resolution = resolution,
     q = q,
     c = c,
     k = k,
@@ -268,7 +287,7 @@ The bipartite argument should probably be set to TRUE.")
   if (lang == "igraph") {
     # Run algo
     net <- igraph::graph_from_data_frame(netemp, directed = FALSE)
-    outalg <- igraph::cluster_louvain(net)
+    outalg <- igraph::cluster_louvain(net, resolution = resolution)
     comtemp <- cbind(as.numeric(outalg$names), as.numeric(outalg$membership))
 
     com <- data.frame(ID = idnode[, 2], Com = 0)

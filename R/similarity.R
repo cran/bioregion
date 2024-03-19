@@ -7,8 +7,11 @@
 #' @param comat a co-occurrence `matrix` with sites as rows and species as
 #' columns.
 #' 
-#' @param metric a vector of string(s) indicating which similarity metric(s) to
-#' chose (see Details). If `"all"` is specified, then all metrics will be
+#' @param metric a vector of string(s) indicating which metrics to chose
+#' (see Details). Available options are *abc*, *ABC*, *Jaccard*,
+#' *Jaccardturn*, *Sorensen*, *Simpson*,  *Bray*,
+#' *Brayturn* or *Euclidean*.\cr
+#' If `"all"` is specified, then all metrics will be
 #' calculated. Can be set to `NULL` if `formula` is used.
 #' 
 #' @param formula a vector of string(s) with your own formula based on the
@@ -18,7 +21,7 @@
 #' @param method a string indicating what method should be used to compute
 #' `abc` (see Details).
 #' `method = "prodmat"` by default is more efficient but can be greedy in
-#' memory and `method="loops"` is less efficient but less greedy in
+#' memory and `method = "loops"` is less efficient but less greedy in
 #' memory.
 #' 
 #' @details
@@ -67,7 +70,8 @@
 #' `formula` except for the metric *abc* and *ABC* that are
 #' stored in three columns (one for each letter).
 #' 
-#' @seealso [dissimilarity] [dissimilarity_to_similarity] [similarity_to_dissimilarity]
+#' @seealso [dissimilarity] [dissimilarity_to_similarity] 
+#' [similarity_to_dissimilarity]
 #' 
 #' @author
 #' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}), 
@@ -80,9 +84,9 @@
 #' rownames(comat) <- paste0("Site", 1:5)
 #' colnames(comat) <- paste0("Species", 1:10)
 #'
-#' simil <- similarity(comat, metric = c("abc", "ABC", "Simpson", "Brayturn"))
+#' sim <- similarity(comat, metric = c("abc", "ABC", "Simpson", "Brayturn"))
 #'
-#' simil <- similarity(comat, metric = "all",
+#' sim <- similarity(comat, metric = "all",
 #' formula = "1 - (b + c) / (a + b + c)")
 #' 
 #' @references
@@ -90,11 +94,7 @@
 #' 
 #' \insertRef{Baselga2013}{bioregion}
 #' 
-#' @importFrom Matrix tcrossprod
-#' @importFrom stats dist
-#' 
 #' @export
-
 similarity <- function(comat, metric = "Simpson", formula = NULL,
                        method = "prodmat"){
   
@@ -113,7 +113,7 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
   
   # Controls
   if (is.null(metric) & is.null(formula)) {
-    stop("metric or formula should be used")
+    stop("metric or formula should be used", call. = FALSE)
   }
   
   if (length(intersect(c(lsmetricabc, lsmetricABC, lsmetrico), metric)) !=
@@ -121,11 +121,11 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
     stop("One or several similarity metric(s) chosen is not available.
      Please chose among the followings:
          abc, Jaccard, Jaccardturn, Sorensen, Simpson, ABC, Bray, Brayturn or
-         Euclidean.")
+         Euclidean.", call. = FALSE)
   }
   
   if (!is.null(formula) & !is.character(formula)) {
-    stop("formula should be a vector of characters if not NULL")
+    stop("formula should be a vector of characters if not NULL", call. = FALSE)
   } else { # Check if abc and ABC in formula
     abcinformula <- (sum(c(grepl("a", formula), grepl("b", formula),
                            grepl("c", formula))) > 0)
@@ -134,23 +134,27 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
   }
   
   if (!is.matrix(comat)) {
-    stop("Co-occurrence matrix should be a matrix")
+    stop("Co-occurrence matrix should be a matrix", call. = FALSE)
   }
   
   sco <- sum(is.na(comat))
   minco <- min(comat)
   if (sco > 0) {
     stop("Co-occurrence matrix should contains only positive real: NA(s)
-         detected!")
+         detected!", call. = FALSE)
   }
   if (minco < 0) {
-    stop("Co-occurrence matrix should contains only positive real: negative
-         value detected!")
+    if("Euclidean" %in% metric){
+      message("Negative value(s) detected in the co-occurence matrix!")
+    }else{
+      stop("Co-occurrence matrix should contains only positive real: negative
+         value detected!", call. = FALSE)
+    }
   }
   
   if (!(method %in% c("prodmat", "loops"))) {
     stop("The method is not available.
-     Please chose among the followings: prodmat, loops")
+     Please chose among the followings: prodmat, loops", call. = FALSE)
   }
   
   # Extract site id
@@ -299,6 +303,8 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
   
   # Inform nature of the output
   attr(res, "type") <- "similarity"
+  attr(res, "nb_sites") <- nrow(comat)
+  attr(res, "nb_species") <- ncol(comat)
   
   # Return the output
   return(res)

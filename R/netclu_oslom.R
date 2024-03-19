@@ -47,7 +47,7 @@
 #'
 #' @param return_node_type a `character` indicating what types of nodes
 #' ("sites", "species" or "both") should be returned in the output
-#' (`keep_nodes_type="both"` by default).
+#' (`return_node_type = "both"` by default).
 #'
 #' @param binpath a `character` indicating the path to the bin folder
 #' (see [install_binaries] and Details).
@@ -201,8 +201,12 @@ netclu_oslom <- function(net,
   }
 
   if (check) {
-    # Control input net
-    controls(args = NULL, data = net, type = "input_bioregion.pairwise.metric")
+    # Control input net (+ check similarity if not bipartite)
+    controls(args = bipartite, data = NULL, type = "boolean")
+    isbip <- bipartite
+    if(!isbip){
+      controls(args = NULL, data = net, type = "input_similarity")
+    }
     controls(args = NULL, data = net, type = "input_net")
 
     # Control input weight & index
@@ -215,8 +219,6 @@ netclu_oslom <- function(net,
     }
 
     # Control input bipartite
-    controls(args = bipartite, data = NULL, type = "boolean")
-    isbip <- bipartite
     if (isbip) {
       controls(args = NULL, data = net, type = "input_net_bip")
       controls(args = site_col, data = net, type = "input_net_bip_col")

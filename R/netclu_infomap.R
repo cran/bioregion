@@ -49,7 +49,7 @@
 #'
 #' @param return_node_type a `character` indicating what types of nodes
 #' ("sites", "species" or "both") should be returned in the output
-#' (`keep_nodes_type="both"` by default).
+#' (`return_node_type = "both"` by default).
 #'
 #' @param version a `character` indicating the Infomap version to use.
 #'
@@ -152,7 +152,7 @@ netclu_infomap <- function(net,
                            site_col = 1,
                            species_col = 2,
                            return_node_type = "both",
-                           version = "2.6.0",
+                           version = "2.7.1",
                            binpath = "tempdir",
                            path_temp = "infomap_temp",
                            delete_temp = TRUE) {
@@ -193,8 +193,13 @@ netclu_infomap <- function(net,
       paste0(binpath, "/bin/INFOMAP/", version, "/")
     ))
   } else {
-    # Control input net
-    controls(args = NULL, data = net, type = "input_bioregion.pairwise.metric")
+    # Control input net (+ check similarity if not bipartite)
+    controls(args = bipartite_version, data = NULL, type = "boolean")
+    controls(args = bipartite, data = NULL, type = "boolean")
+    isbip <- bipartite
+    if(!isbip){
+      controls(args = NULL, data = net, type = "input_similarity")
+    }
     controls(args = NULL, data = net, type = "input_net")
 
     # Control input weight & index
@@ -207,9 +212,6 @@ netclu_infomap <- function(net,
     }
 
     # Control input bipartite
-    controls(args = bipartite_version, data = NULL, type = "boolean")
-    controls(args = bipartite, data = NULL, type = "boolean")
-    isbip <- (bipartite | bipartite_version)
     if (isbip) {
       controls(args = NULL, data = net, type = "input_net_bip")
       controls(args = site_col, data = net, type = "input_net_bip_col")

@@ -5,9 +5,12 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/bioRgeo/bioregion/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bioRgeo/bioregion/actions/workflows/R-CMD-check.yaml)
-[![version](https://img.shields.io/github/v/release/bioRgeo/bioregion?label=version&style=flat&logo=github)](https://github.com/bioRgeo/bioregion)
-[![licence](https://img.shields.io/badge/Licence-GPL--3-blue.svg)](https://www.r-project.org/Licenses/GPL-3)
+[![R-CMD-check](https://github.com/bioRgeo/bioregion/workflows/R-CMD-check/badge.svg)](https://github.com/bioRgeo/bioregion/actions)
+[![Codecov test
+coverage](https://codecov.io/gh/bioRgeo/bioregion/branch/master/graph/badge.svg)](https://app.codecov.io/gh/bioRgeo/bioregion?branch=master)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/bioregion)](https://cran.r-project.org/package=bioregion)
+[![rstudio mirror
+downloads](http://cranlogs.r-pkg.org/badges/bioregion)](https://r-pkg.org:443/pkg/bioregion)
 <!-- badges: end -->
 
 This **R package** gathers a comprehensive set of algorithms to perform
@@ -19,9 +22,16 @@ algorithms.
 
 # :arrow_double_down: Installation
 
-The package is not on CRAN yet and is still under active development.
-You can install the development version from the GitHub repository with
-the following command:
+The package can be installed with the following command line in R
+session:
+
+From the CRAN
+
+``` r
+install.packages("bioregion")
+```
+
+or from GitHub
 
 ``` r
 # install.packages("devtools")
