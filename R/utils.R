@@ -1,14 +1,66 @@
 # Controls #####################################################################
 controls <- function(args = NULL, data = NULL, type = "input_net") {
   
-  # Input similarity ##########################################################
+  lstype <- c("input_nhandhclu",
+              "input_similarity",
+              "input_dissimilarity",
+              "input_conversion_similarity",
+              "input_conversion_dissimilarity",
+              "input_net",
+              "input_net_directed",
+              "input_net_isdirected",
+              "input_net_isloop",
+              "input_net_weight",
+              "input_net_index",
+              "input_net_index_value",
+              "input_net_index_positive_value",
+              "input_net_bip",
+              "input_net_bip_col", 
+              "input_matrix",
+              "input_dist",
+              "input_data_frame_nhandhclu",
+              "input_data_frame",
+              "character",
+              "character_vector",
+              "boolean",
+              "boolean_vector",
+              "numeric",
+              "numeric_vector",
+              "positive_numeric",
+              "positive_numeric_vector",
+              "strict_positive_numeric",
+              "strict_positive_numeric_vector",
+              "integer",
+              "integer_vector",
+              "positive_integer",
+              "positive_integer_vector",
+              "strict_positive_integer",
+              "strict_positive_integer_vector")
+  
+  if(!(type %in% lstype)){
+    stop("Control type not defined!", call.=FALSE)
+  }
+  
+  # Input nhandhclu ############################################################
+  if (type == "input_nhandhclu") {
+    if (!inherits(data, "bioregion.pairwise.metric") &
+        !inherits(data, "dist") &
+        !is.data.frame(data)) {
+      stop(paste0(deparse(substitute(data)), " is not a bioregion.pairwise.metric object, 
+a dissimilarity matrix (class dist) or 
+a data.frame with at least 3 columns (site1, site2 and your dissimilarity index)."),
+           call. = FALSE)
+    }
+  }
+  
+  # Input similarity ###########################################################
   if (type == "input_similarity") {
     if(!inherits(data, "bioregion.pairwise.metric")) {
-     message(paste0(deparse(substitute(data)),
-                     " is not a bioregion.pairwise.metric object. 
-Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
-others similarity metrics (netclu_). 
-Please carefully check your data before using the clustering functions."))
+#      message(paste0(deparse(substitute(data)),
+#                      " is not a bioregion.pairwise.metric object. 
+# Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
+# others similarity metrics (netclu_). 
+# Please carefully check your data before using the clustering functions."))
     }else{
       if(is.null(attr(data, "type"))){
         message(paste0(deparse(substitute(data)),
@@ -29,14 +81,14 @@ Use dissimilarity_to_similarity() before using this function."), call. = FALSE)
     }
   }
   
-  # Input dissimilarity #######################################################
+  # Input dissimilarity ########################################################
   if (type == "input_dissimilarity") {
     if(!inherits(data, "bioregion.pairwise.metric")) {
-      message(paste0(deparse(substitute(data)),
-                     " is not a bioregion.pairwise.metric object. 
-Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
-others similarity metrics (netclu_). 
-Please carefully check your data before using the clustering functions."))
+#       message(paste0(deparse(substitute(data)),
+#                      " is not a bioregion.pairwise.metric object. 
+# Note that some functions required dissimilarity metrics (hclu_ & nhclu_) and
+# others similarity metrics (netclu_). 
+# Please carefully check your data before using the clustering functions."))
     }else{
       if(is.null(attr(data, "type"))){
         message(paste0(deparse(substitute(data)),
@@ -62,7 +114,7 @@ Use similarity_to_dissimilarity() before using this function."), call. = FALSE)
     if (!inherits(data, "bioregion.pairwise.metric")) {
       stop(paste0(deparse(substitute(data)), 
                   " should be a bioregion.pairwise.metric object created by 
-similarity() or dissimilarity_to_similarity()"),
+similarity() or dissimilarity_to_similarity()."),
                   call. = FALSE)
     }
     if(is.null(attr(data, "type"))){
@@ -75,35 +127,18 @@ probably because the bioregion.pairwise.metric object has been altered."),
     if (attr(data, "type") == "dissimilarity") {
       stop(paste0(deparse(substitute(data)), " is already composed of 
 dissimilarity metrics. If you want to convert it to similarity, use 
-dissimilarity_to_similarity()"),
+dissimilarity_to_similarity()."),
            call. = FALSE)
     }
-    if (!is.data.frame(data)) {
-      stop(paste0(deparse(substitute(data)), " must be a data.frame."),
-           call. = FALSE)
-    }
-    if (dim(data)[2] < 2) {
-      stop(paste0(deparse(substitute(data)),
-                  " must be a data.frame with at least two columns."),
-           call. = FALSE)
-    }
-    nbna <- sum(is.na(data))
-    if (nbna > 0) {
-      stop("NA(s) detected in the data.frame!", call. = FALSE)
-    }
-    for(k in 3:dim(data)[2]){
-      if (!is.numeric(data[, k])) {
-        stop("The (dis)similarity metric(s) must be numeric.", call. = FALSE)
-      }
-    }
+
   }
   
-  # Input conversion dissimilarity ################################################
+  # Input conversion dissimilarity #############################################
   if (type == "input_conversion_dissimilarity") {
     if (!inherits(data, "bioregion.pairwise.metric")) {
       stop(paste0(deparse(substitute(data)), 
                   " should be a bioregion.pairwise.metric object created by 
-similarity() or dissimilarity_to_similarity()"),
+dissimilarity() or similarity_to_dissimilarity()."),
            call. = FALSE)
     }
     if(is.null(attr(data, "type"))){
@@ -116,30 +151,12 @@ probably because the bioregion.pairwise.metric object has been altered."),
     if (attr(data, "type") == "similarity") {
       stop(paste0(deparse(substitute(data)), " is already composed of 
 similarity metrics. If you want to convert it to dissimilarity, use 
-similarity_to_dissimilarity()"),
+similarity_to_dissimilarity()."),
            call. = FALSE)
-    }
-    if (!is.data.frame(data)) {
-      stop(paste0(deparse(substitute(data)), " must be a data.frame."),
-           call. = FALSE)
-    }
-    if (dim(data)[2] < 2) {
-      stop(paste0(deparse(substitute(data)),
-                  " must be a data.frame with at least two columns."),
-           call. = FALSE)
-    }
-    nbna <- sum(is.na(data))
-    if (nbna > 0) {
-      stop("NA(s) detected in the data.frame!", call. = FALSE)
-    }
-    for(k in 3:dim(data)[2]){
-      if (!is.numeric(data[, k])) {
-        stop("The (dis)similarity metric(s) must be numeric.", call. = FALSE)
-      }
     }
   }  
   
-  # Input network #############################################################
+  # Input network ##############################################################
   if (type == "input_net") {
     if (!is.data.frame(data)) {
       stop(paste0(deparse(substitute(data)), " must be a data.frame."),
@@ -157,18 +174,24 @@ similarity_to_dissimilarity()"),
         " contain duplicated pairs of nodes!"
       ), call. = FALSE)
     }
-    nbna <- sum(is.na(data))
+    nbna <- sum(is.na(data[,1:2]))
     if (nbna > 0) {
-      stop("NA(s) detected in the data.frame!", call. = FALSE)
+      stop(paste0("NA(s) detected in ", deparse(substitute(data)),"."), call. = FALSE)
     }
   }
   
-  # Input network directed ####################################################
+  # Input network loop or directed #############################################
   if (type == "input_net_directed") {
+    if (length(args) > 1) {
+      stop(paste0(deparse(substitute(args)), " must be of length 1."),
+           call. = FALSE
+      )
+    }
     if (!is.logical(args)) {
       stop(paste0(deparse(substitute(args)), " must be a boolean."),
            call. = FALSE)
     }
+    #data = data[data[,1] != data[,2],]
     pairs1 <- paste0(data[, 1], "_", data[, 2])
     pairs2 <- paste0(data[, 2], "_", data[, 1])
     if (!args) {
@@ -180,33 +203,51 @@ similarity_to_dissimilarity()"),
     }
   }
   if (type == "input_net_isdirected") {
+    #data = data[data[,1] != data[,2],]
     pairs1 <- paste0(data[, 1], "_", data[, 2])
     pairs2 <- paste0(data[, 2], "_", data[, 1])
     if (length(intersect(pairs1, pairs2)) > 0) {
-      message(paste0("It seems that the network is directed!
-                        This function is designed for undirected networks!"))
+       stop(paste0("The network is directed, this function is designed for undirected networks!"),
+            call. = FALSE)
+    }
+  }
+  if (type == "input_net_isloop") {
+    if (sum(data[,1] == data[,2]) > 0) {
+      stop("The network contains self-loop(s)!",
+           call.=FALSE)
     }
   }
   
-  # Input network weight ######################################################
+  # Input network weight #######################################################
   if (type == "input_net_weight") {
+    if (length(args) > 1) {
+      stop(paste0(deparse(substitute(args)), " must be of length 1."),
+           call. = FALSE
+      )
+    }
     if (!is.logical(args)) {
       stop(paste0(deparse(substitute(args)), " must be a boolean."),
            call. = FALSE)
     }
     if (args & dim(data)[2] == 2) {
       stop(paste0(
-        deparse(substitute(args)),
+        deparse(substitute(data)),
         " must be a data.frame with at least three columns if weight equal 
         TRUE."), call. = FALSE)
     }
+
   }
   
-  # Input network index #######################################################
+  # Input network index ########################################################
   if (type == "input_net_index") {
+    if (length(args) > 1) {
+      stop(paste0(deparse(substitute(args)), " must be of length 1."),
+           call. = FALSE
+      )
+    }
     if (is.character(args)) {
       if (!(args %in% colnames(data)[-(1:2)])) {
-        stop(paste0(deparse(substitute(args)),
+        stop(paste0("If ", deparse(substitute(args)),
                     " is a character, it should be a column name (and not the
                     first or second column)."), call. = FALSE)
       }
@@ -240,15 +281,29 @@ similarity_to_dissimilarity()"),
     }
   }
   
-  # Input network index value #################################################
+  # Input network index value ##################################################
   if (type == "input_net_index_value") {
+    nbna <- sum(is.na(data[,3]))
+    if (nbna > 0) {
+      stop("NA(s) detected in the weight column.", call. = FALSE)
+    }
     if (!is.numeric(data[, 3])) {
-      stop("The (dis)similarity metric must be numeric.", call. = FALSE)
+      stop("The weight column must be numeric.", call. = FALSE)
+    } 
+  }
+  
+  # Input network index positive value #########################################
+  if (type == "input_net_index_positive_value") {
+    nbna <- sum(is.na(data[,3]))
+    if (nbna > 0) {
+      stop("NA(s) detected in the weight column.", call. = FALSE)
+    }
+    if (!is.numeric(data[, 3])) {
+      stop("The weight column must be numeric.", call. = FALSE)
     } else {
       minet <- min(data[, 3])
       if (minet < 0) {
-        stop(
-          "The (dis)similarity metric should contain only positive reals:
+        stop("The weight column should contain only positive reals:
           negative value(s) detected!", call. = FALSE)
       }
     }
@@ -289,20 +344,20 @@ similarity_to_dissimilarity()"),
                   " should be numeric or character."), call. = FALSE)
     }
   }
-  
-  # Input data.frame ##########################################################
-  if (type == "input_data_frame") {
-    if (!is.data.frame(data)) {
-      stop(paste0(deparse(substitute(data)), " must be a data.frame"),
+
+  # Input matrix ###############################################################
+  if (type == "input_matrix") {
+    if (!is.matrix(data)) {
+      stop(paste0(deparse(substitute(data)), " must be a matrix."),
            call. = FALSE)
     }
     rowmat <- rownames(data)
     colmat <- colnames(data)
     if (sum(duplicated(rowmat)) > 0) {
-      message("Duplicated rownames detected!")
+      stop("Duplicated rownames detected!", call. = FALSE)
     }
     if (sum(duplicated(colmat)) > 0) {
-      message("Duplicated colnames detected!")
+      stop("Duplicated colnames detected!", call. = FALSE)
     }
     nbna <- sum(is.na(data))
     if (nbna > 0) {
@@ -310,10 +365,66 @@ similarity_to_dissimilarity()"),
     }
   }
   
-  # Input matrix ##############################################################
-  if (type == "input_matrix") {
-    if (!is.matrix(data)) {
-      stop(paste0(deparse(substitute(data)), " must be a matrix."),
+  # Input dist ###############################################################
+  if (type == "input_dist") {
+    if (!inherits(data, "dist")) {
+      stop(paste0(deparse(substitute(data)), " must be a dist object."),
+           call. = FALSE)
+    }
+    if (!is.numeric(data)) {
+      stop(paste0(deparse(substitute(data)), " must be numeric."),
+           call. = FALSE)
+    }
+    nbna <- sum(is.na(data))
+    if (nbna > 0) {
+      stop(paste0("NA(s) detected in ", paste0(deparse(substitute(data))), "."),
+           call. = FALSE)
+    }
+  }
+
+  # Input data.frame nhandhclu #################################################
+  if (type == "input_data_frame_nhandhclu") {
+    if (!is.data.frame(data)) {
+      stop(paste0(deparse(substitute(data)), " must be a data.frame."),
+           call. = FALSE)
+    }
+    if (dim(data)[2] < 3) {
+      stop(paste0(deparse(substitute(data)),
+                  " must be a data.frame with at least three columns."),
+           call. = FALSE)
+    }
+    nbna <- sum(is.na(data))
+    if (nbna > 0) {
+      stop(paste0("NA(s) detected in ", deparse(substitute(data)),"."), call. = FALSE)
+    }
+
+    if (sum(data[,1] == data[,2]) > 0) {
+      stop(paste0(
+        deparse(substitute(data)),
+        " contains rows with the same site on both columns!"
+      ), call. = FALSE)
+    }
+        
+    pairs1 <- paste0(data[, 1], "_", data[, 2])
+    if (sum(duplicated(pairs1)) > 0) {
+      stop(paste0(
+        "The first two columns of ", deparse(substitute(data)),
+        " contain duplicated pairs of sites!"
+      ), call. = FALSE)
+    }
+    pairs2 <- paste0(data[, 2], "_", data[, 1])
+    if (length(intersect(pairs1, pairs2)) > 0) {
+      stop(paste0(
+        "The first two columns of ", deparse(substitute(data)),
+        " contain (unordered) duplicated pairs of sites!"
+      ), call. = FALSE)
+    }
+  }
+  
+  # Input data.frame ###########################################################
+  if (type == "input_data_frame") {
+    if (!is.data.frame(data)) {
+      stop(paste0(deparse(substitute(data)), " must be a data.frame"),
            call. = FALSE)
     }
     rowmat <- rownames(data)
@@ -342,10 +453,6 @@ similarity_to_dissimilarity()"),
            call. = FALSE
       )
     }
-    if (is.factor(args)) {
-      args <- as.character(args)
-    }
-    return(args)
   }
   
   # Character vector ###########################################################
@@ -355,10 +462,6 @@ similarity_to_dissimilarity()"),
            call. = FALSE
       )
     }
-    if (is.factor(args)) {
-      args <- as.character(args)
-    }
-    return(args)
   }
   
   # Boolean ####################################################################
@@ -433,8 +536,8 @@ similarity_to_dissimilarity()"),
            call. = FALSE)
     } else {
       if (sum(args < 0) > 0) {
-        stop(paste0(deparse(substitute(args)), " must be composed of value 
-                    higher than 0."),
+        stop(paste0(deparse(substitute(args)), 
+                    " must be composed of value(s) higher than 0."),
              call. = FALSE
         )
       }
@@ -467,7 +570,7 @@ similarity_to_dissimilarity()"),
     } else {
       if (sum(args <= 0) > 0) {
         stop(paste0(deparse(substitute(args)),
-                    " must be composed of value strictly higher than 0."),
+                    " must be composed of value(s) strictly higher than 0."),
              call. = FALSE)
       }
     }
@@ -499,7 +602,7 @@ similarity_to_dissimilarity()"),
            call. = FALSE)
     } else {
       if (sum(args %% 1 != 0) > 0) {
-        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
+        stop(paste0(deparse(substitute(args)), " must be composed of integer(s)."),
              call. = FALSE
         )
       }
@@ -538,13 +641,13 @@ similarity_to_dissimilarity()"),
            call. = FALSE)
     } else {
       if (sum(args %% 1 != 0) > 0) {
-        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
+        stop(paste0(deparse(substitute(args)), " must be composed of integer(s)."),
              call. = FALSE
         )
       } else {
         if (sum(args < 0) > 0) {
-          stop(paste0(deparse(substitute(args)), " must be composed of value 
-                      higher than 0."),
+          stop(paste0(deparse(substitute(args)), 
+                      " must be composed of value(s) higher than 0."),
                call. = FALSE
           )
         }
@@ -583,13 +686,13 @@ similarity_to_dissimilarity()"),
            call. = FALSE)
     } else {
       if (sum(args %% 1 != 0) > 0) {
-        stop(paste0(deparse(substitute(args)), " must be composed of integers."),
+        stop(paste0(deparse(substitute(args)), " must be composed of integer(s)."),
              call. = FALSE
         )
       } else {
         if (sum(args <= 0) > 0) {
           stop(paste0(deparse(substitute(args)),
-                      " must be composed of value strictly higher than 0."), 
+                      " must be composed of value(s) strictly higher than 0."), 
                call. = FALSE)
         }
       }
@@ -601,82 +704,86 @@ similarity_to_dissimilarity()"),
 # reformat_hierarchy
 reformat_hierarchy <- function(input, algo = "infomap", integerize = FALSE) {
   
-  # Input
-  input <- as.character(as.vector(as.matrix(input)))
-  
-  # Algo
-  if (algo == "infomap") {
+  # Infomap
+  if(algo == "infomap"){
+    
     sep <- ":"
-  }
-  if (algo == "optics") {
-    sep <- "."
-  }
-  
-  # Nb levels
-  nblev <- max(lengths(regmatches(input, gregexpr(paste0("\\", sep),
-                                                  input)))) + 1
-  
-  # From input to table
-  table <- tidyr::separate(
-    data = data.frame(input),
-    col = input,
-    remove = FALSE,
-    into = paste0("lvl", 1:nblev),
-    sep = paste0("\\", sep),
-    fill = "right"
-  )
-  
-  # Replace NA by O
-  table[which(is.na(table), arr.ind = TRUE)] <- 0
-  
-  # Replace last number by 0 for infomap
-  if (algo == "infomap") {
+    
+    # Input
+    input <- as.character(as.vector(as.matrix(input)))
+    
+    # Nb levels
+    nblev <- max(lengths(regmatches(input, gregexpr(paste0("\\", sep),
+                                                    input)))) + 1
+    
+    # From input to table
+    table <- tidyr::separate(
+      data = data.frame(input),
+      col = input,
+      remove = FALSE,
+      into = paste0("lvl", 1:nblev),
+      sep = paste0("\\", sep),
+      fill = "right"
+    )
+    
+    # Replace NA by O
+    table[which(is.na(table), arr.ind = TRUE)] <- 0
+    
     for (k in 3:(nblev + 1)) {
       table[table[, k] == 0, (k - 1)] <- 0
     }
     table[, (nblev + 1)] <- 0
+    
+    # Output
+    output <- table
+    for (lvl in grep("lvl", colnames(output))[2:nblev]) {
+      output[, lvl] <- paste(output[, lvl - 1], output[, lvl], sep = ".")
+    }
+    output[grep("lvl", colnames(output))] <- lapply(
+      output[grep("lvl", colnames(output))],
+      function(x) gsub("\\.0", "", x)
+    )
+    # Integerize
+    if (integerize) {
+      for (k in 2:(nblev + 1)) {
+        output[, k] <- as.numeric(as.factor(output[, k]))
+      }
+    }
+  
   }
   
-  # Output
-  output <- table
-  for (lvl in grep("lvl", colnames(output))[2:nblev]) {
-    output[, lvl] <- paste(output[, lvl - 1], output[, lvl], sep = ".")
-  }
-  output[grep("lvl", colnames(output))] <- lapply(
-    output[grep("lvl", colnames(output))],
-    function(x) gsub("\\.0", "", x)
-  )
-  # Integerize
-  if (integerize) {
-    for (k in 2:(nblev + 1)) {
-      output[, k] <- as.numeric(as.factor(output[, k]))
+  # Algo
+  if (algo == "louvain") {
+    
+    id0 <- which(input[, 1] == 0)
+    output <- input[(id0[1] + 1):(id0[2] - 1), ]
+    colnames(output) <- c("ID", paste0("V",1))
+    
+    if(length(id0)>2){
+      for(k in 2:(length(id0)-1)){
+        output$temp <- NA
+        tabk <- input[(id0[k] + 1):(id0[k+1] - 1),]
+        output[,(k+1)] <- tabk[match(output[,k], tabk[,1]),2]
+        colnames(output)[(k+1)] <- paste0("V",k)
+        
+      }
     }
+    
   }
   
   return(output)
 }
 
 # knbclu
-knbclu <- function(partitions, method = "length",
-                   reorder = TRUE, rename_duplicates = TRUE) {
+knbclu <- function(partitions, 
+                   reorder = TRUE, 
+                   rename_duplicates = TRUE) {
   
   # Identify the number of clusters per partition
   nb <- dim(partitions)[2] - 1
-  
-  
-  if (method == "max") {
-    nbclus <- as.numeric(apply(
-      partitions[, 2:(nb + 1), drop = FALSE],
-      2,
-      function(x) max(x)
-    ))
-  } else if (method == "length") {
-    nbclus <- apply(
-      partitions[, 2:(nb + 1), drop = FALSE],
-      2,
-      function(x) length(unique(x))
-    )
-  }
+  nbclus <- apply(partitions[, 2:(nb + 1), drop = FALSE],
+                  2,
+                  function(x) length(unique(x[!is.na(x)])))
   
   # Rename and reorder
   if (reorder) {

@@ -11,11 +11,17 @@
 #'
 #' @param weight a `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
+#' 
+#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' between sites with a weight strictly lower than this value will not be 
+#' considered (O by default).
 #'
 #' @param index name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
+#' 
+#' @param seed for the random number generator (NULL for random by default).
 #'
-#' @param reassign a string indicating if the nodes belonging to several
+#' @param reassign a `character` indicating if the nodes belonging to several
 #' community should be reassign and what method should be used (see Note).
 #'
 #' @param r the number of runs for the first hierarchical level
@@ -23,8 +29,6 @@
 #'
 #' @param hr the number of runs for the higher hierarchical level (50 by
 #' default, 0 if you are not interested in hierarchies).
-#'
-#' @param seed for the random number generator (0 for random by default).
 #'
 #' @param t the p-value, the default value is 0.10, increase this value you to
 #' get more modules.
@@ -46,7 +50,7 @@
 #' (i.e. feature nodes).
 #'
 #' @param return_node_type a `character` indicating what types of nodes
-#' ("sites", "species" or "both") should be returned in the output
+#' (`site`, `species` or `both`) should be returned in the output
 #' (`return_node_type = "both"` by default).
 #'
 #' @param binpath a `character` indicating the path to the bin folder
@@ -83,26 +87,26 @@
 #' first two columns is dedicated to the site nodes (i.e. primary nodes) and
 #' species nodes (i.e.feature nodes) using the arguments `site_col` and
 #' `species_col`. The type of nodes returned in the output can be chosen
-#' with the argument `return_node_type` equal to `"both"` to keep both
-#' types of nodes, `"sites"` to preserve only the sites nodes and
-#' `"species"` to preserve only the species nodes.
+#' with the argument `return_node_type` equal to `both` to keep both
+#' types of nodes, `sites` to preserve only the sites nodes and
+#' `species` to preserve only the species nodes.
 #'
 #' Since OSLOM potentially returns overlapping communities we propose two
-#' methods to reassign the 'overlapping' nodes randomly `reassign = 'random'`
-#' or based on the closest candidate community `reassign = 'simil'` (only for
+#' methods to reassign the 'overlapping' nodes randomly `reassign = "random"`
+#' or based on the closest candidate community `reassign = "simil"` (only for
 #' weighted networks, in this case the closest candidate community is
-#' determined with the average similarity). By default `reassign = 'no'` and
+#' determined with the average similarity). By default `reassign = "no"` and
 #' all the information will be provided. The number of partitions will depend
-#' on the number of overlapping modules (up to three). The suffix '_semel',
-#' '_bis' and '_ter' are added to the column names. The first partition
-#' ('_semel') assigns a module for each node. A value of 0 in the second
-#' ('_bis') and third ('_ter') columns indicates that no overlapping module
+#' on the number of overlapping modules (up to three). The suffix `_semel`,
+#' `_bis` and `_ter` are added to the column names. The first partition
+#' (`_semel`) assigns a module to each node. A value of `NA` in the second
+#' (`_bis`) and third (`_ter`) columns indicates that no overlapping module
 #' were found for this node (i.e. non-overlapping nodes).
 #'
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
@@ -138,11 +142,12 @@
 #' @export
 netclu_oslom <- function(net,
                          weight = TRUE,
+                         cut_weight = 0,
                          index = names(net)[3],
+                         seed = NULL,
                          reassign = "no",
                          r = 10,
                          hr = 50,
-                         seed = 0,
                          t = 0.1,
                          cp = 0.5,
                          directed = FALSE,
@@ -156,6 +161,8 @@ netclu_oslom <- function(net,
   
   # Control and set binpath
   controls(args = binpath, data = NULL, type = "character")
+  controls(args = path_temp, data = NULL, type = "character")
+  controls(args = delete_temp, data = NULL, type = "boolean")
   if (binpath == "tempdir") {
     binpath <- tempdir()
   } else if (binpath == "pkgfolder") {
@@ -172,6 +179,7 @@ netclu_oslom <- function(net,
 
   # Check if OSLOM has successfully been installed
   check <- FALSE
+  controls(args = directed, data = NULL, type = "boolean")
   if (!directed) {
     if (!file.exists(paste0(binpath, "/bin/OSLOM/check.txt"))) {
       message(
@@ -201,6 +209,27 @@ netclu_oslom <- function(net,
   }
 
   if (check) {
+    
+    # Control parameters OSLOM
+    controls(args = reassign, data = NULL, type = "character")
+    if (!(reassign %in% c("no", "random", "simil"))) {
+      stop("Please choose reassign among the following values: 
+no, random or simil")
+    }
+    controls(args = r, data = NULL, type = "strict_positive_integer")
+    controls(args = hr, data = NULL, type = "positive_integer")
+    if(!is.null(seed)){
+      controls(args = seed, data = NULL, type = "strict_positive_integer")
+    }
+    controls(args = t, data = NULL, type = "strict_positive_numeric")
+    if (t >= 1) {
+      stop("t must be in the interval (0,1)!", call. = FALSE)
+    }
+    controls(args = cp, data = NULL, type = "strict_positive_numeric")
+    if (cp >= 1) {
+      stop("cp must be in the interval (0,1)!", call. = FALSE)
+    }
+    
     # Control input net (+ check similarity if not bipartite)
     controls(args = bipartite, data = NULL, type = "boolean")
     isbip <- bipartite
@@ -211,26 +240,36 @@ netclu_oslom <- function(net,
 
     # Control input weight & index
     controls(args = weight, data = net, type = "input_net_weight")
+    if (reassign == "simil" & !weight) {
+      stop("A reassignement based on similarity should not be use when weight
+           equal FALSE")
+    }
     if (weight) {
+      controls(args = cut_weight, data = net, type = "positive_numeric")
       controls(args = index, data = net, type = "input_net_index")
       net[, 3] <- net[, index]
       net <- net[, 1:3]
-      controls(args = NULL, data = net, type = "input_net_index_value")
+      controls(args = NULL, data = net, type = "input_net_index_positive_value")
     }
 
     # Control input bipartite
     if (isbip) {
       controls(args = NULL, data = net, type = "input_net_bip")
+      if(site_col == species_col){
+        stop("site_col and species_col should not be the same.", call. = FALSE)
+      }
       controls(args = site_col, data = net, type = "input_net_bip_col")
       controls(args = species_col, data = net, type = "input_net_bip_col")
+      controls(args = return_node_type, data = NULL, type = "character")
       if (!(return_node_type %in% c("both", "sites", "species"))) {
         stop("Please choose return_node_type among the followings values:
-both, sites and species", call. = FALSE)
+both, sites or species", call. = FALSE)
       }
     }
 
     # Control input directed
     if (!isbip) {
+      controls(args = NULL, data = net, type = "input_net_isloop")
       controls(args = directed, data = net, type = "input_net_directed")
     } else {
       if (directed) {
@@ -239,34 +278,8 @@ both, sites and species", call. = FALSE)
         )
       }
     }
-
-    # Control parameters OSLOM
-    if (!(reassign %in% c("no", "random", "simil"))) {
-      stop("Please choose reassign among the following values: no, random,
-           simil")
-    }
-    if (reassign == "simil" & !weight) {
-      stop("A reassignement based on similarity should not be use when weight
-           equal FALSE")
-    }
-    controls(args = r, data = NULL, type = "strict_positive_integer")
-    controls(args = hr, data = NULL, type = "positive_integer")
-    controls(args = seed, data = NULL, type = "positive_integer")
-    if (seed == 0) {
-      seed <- round(as.numeric(as.POSIXct(Sys.time())))
-    }
-    controls(args = t, data = NULL, type = "strict_positive_numeric")
-    if (t > 1) {
-      stop("t must be in the interval (0,1)!", call. = FALSE)
-    }
-    controls(args = cp, data = NULL, type = "strict_positive_numeric")
-    if (cp > 1) {
-      stop("cp must be in the interval (0,1)!", call. = FALSE)
-    }
-
-    # Control temp folder + create temp folder
-    path_temp <- controls(args = path_temp, data = NULL, type = "character")
-    controls(args = delete_temp, data = NULL, type = "boolean")
+    
+    # Control temp folder
     old_path_temp <- path_temp
     if (path_temp == "oslom_temp") {
       fold_temp <- paste0(path_temp,
@@ -291,7 +304,6 @@ both, sites and species", call. = FALSE)
       stop(paste0("Impossible to create directory ", path_temp), call. = FALSE)
     }
 
-
     # Prepare input for OSLOM
     if (isbip) {
       idprim <- as.character(net[, site_col])
@@ -309,10 +321,6 @@ both, sites and species", call. = FALSE)
     } else {
       idnode1 <- as.character(net[, 1])
       idnode2 <- as.character(net[, 2])
-      if (isbip) {
-        message("The network seems to be bipartite! The bipartite argument
-                should probably be set to TRUE.")
-      }
       idnode <- c(idnode1, idnode2)
       idnode <- idnode[!duplicated(idnode)]
       nbsites <- length(idnode)
@@ -325,7 +333,7 @@ both, sites and species", call. = FALSE)
 
     if (weight) {
       netemp <- cbind(netemp, net[, 3])
-      netemp <- netemp[netemp[, 3] > 0, ]
+      netemp <- netemp[netemp[, 3] > cut_weight, ]
     }
 
     # Class preparation
@@ -333,11 +341,12 @@ both, sites and species", call. = FALSE)
 
     outputs$args <- list(
       weight = weight,
+      cut_weight = cut_weight,
       index = index,
+      seed = seed,
       reassign = reassign,
       r = r,
       hr = hr,
-      seed = seed,
       t = t,
       cp = cp,
       directed = directed,
@@ -354,7 +363,9 @@ both, sites and species", call. = FALSE)
       bipartite = isbip,
       weight = weight,
       pairwise = ifelse(isbip, FALSE, TRUE),
-      pairwise_metric = ifelse(isbip, NA, index),
+      pairwise_metric = ifelse(!isbip & weight, 
+                               ifelse(is.numeric(index), names(net)[3], index), 
+                               NA),
       dissimilarity = FALSE,
       nb_sites = nbsites,
       hierarchical = FALSE
@@ -369,10 +380,24 @@ both, sites and species", call. = FALSE)
     )
 
     # Prepare command to run OSLOM
-    cmd <- paste0(
-      "-r ", r, " -hr ", hr, " -seed ", seed, " -t ", t, " -cp ",
-      cp
-    )
+    if(is.null(seed)){
+      cmd <- paste0(
+        "-r ", r, 
+        " -hr ", hr, 
+        " -t ", t, 
+        " -cp ",
+        cp
+      )
+    }else{
+      cmd <- paste0(
+        "-r ", r, 
+        " -hr ", hr, 
+        " -seed ", seed, 
+        " -t ", t, 
+        " -cp ",
+        cp
+      )
+    }
 
     # Run OSLOM
     if (os == "Linux") {
@@ -1048,6 +1073,7 @@ both, sites and species", call. = FALSE)
     }
 
     com[, 1] <- as.character(com[, 1])
+    com[,-1][com[,-1]==0]=NA
 
     # Add attributes and return_node_type
     if (isbip) {
@@ -1068,16 +1094,37 @@ both, sites and species", call. = FALSE)
 
     # Set clusters and cluster_info in output
     outputs$clusters <- com
-    outputs$cluster_info <- data.frame(
-      partition_name = names(outputs$clusters)[2:length(outputs$clusters),
-        drop = FALSE
-      ],
-      n_clust = apply(
-        outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
-        2, function(x) length(unique(x))
+    if(reassign == "no"){
+      outputs$cluster_info <- data.frame(
+        partition_name = names(outputs$clusters)[2:length(outputs$clusters),
+                                                 drop = FALSE])
+      outputs$cluster_info$n_clust <- as.numeric(do.call(rbind, 
+                         strsplit(outputs$cluster_info$partition_name, 
+                                  split="_"))[,2])
+    }else{
+      outputs$cluster_info <- data.frame(
+        partition_name = names(outputs$clusters)[2:length(outputs$clusters),
+                                                 drop = FALSE
+        ],
+        n_clust = apply(
+          outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
+          2, function(x) length(unique(x[!is.na(x)]))
+        )
       )
-    )
+    }  
 
+
+    if (nblev>1) {
+      outputs$inputs$hierarchical <- TRUE
+      if(reassign == "no"){
+        num1=outputs$cluster_info$n_clust
+        num2=num1[!duplicated(num1)]
+        outputs$cluster_info$hierarchical_level <- match(num1,num2)
+      }else{
+        outputs$cluster_info$hierarchical_level <- 1:nrow(outputs$cluster_info)
+      }
+    }
+    
     # Return outputs
     class(outputs) <- append("bioregion.clusters", class(outputs))
     return(outputs)

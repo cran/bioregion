@@ -11,17 +11,21 @@
 #'
 #' @param weight a `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
+#' 
+#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' between sites with a weight strictly lower than this value will not be 
+#' considered (O by default).
 #'
 #' @param index name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
+#' 
+#' @param seed for the random number generator (NULL for random by default).
 #'
 #' @param nbmod penalize solutions the more they differ from this number (0 by
 #' default for no preferred number of modules).
 #'
 #' @param markovtime scales link flow to change the cost of moving between
 #' modules, higher values results in fewer modules (default is 1).
-#'
-#' @param seed for the random number generator (0 for random by default).
 #'
 #' @param numtrials for the number of trials before picking up the best
 #' solution.
@@ -48,7 +52,7 @@
 #' (i.e. feature nodes).
 #'
 #' @param return_node_type a `character` indicating what types of nodes
-#' ("sites", "species" or "both") should be returned in the output
+#' (`site`, `species` or `both`) should be returned in the output
 #' (`return_node_type = "both"` by default).
 #'
 #' @param version a `character` indicating the Infomap version to use.
@@ -96,14 +100,14 @@
 #' dedicated to the site nodes (i.e. primary nodes) and species nodes (i.e.
 #' feature nodes) using the arguments `site_col` and `species_col`.
 #' The type of nodes returned in the output can be chosen with the argument
-#' `return_node_type` equal to `"both"` to keep both types of nodes, `"sites"`
-#' to preserve only the sites nodes and `"species"` to preserve only the
+#' `return_node_type` equal to `both` to keep both types of nodes, `sites`
+#' to preserve only the sites nodes and `species` to preserve only the
 #' species nodes.
 #'
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
@@ -139,10 +143,11 @@
 #' @export
 netclu_infomap <- function(net,
                            weight = TRUE,
+                           cut_weight = 0,
                            index = names(net)[3],
+                           seed = NULL,
                            nbmod = 0,
                            markovtime = 1,
-                           seed = 0,
                            numtrials = 1,
                            twolevel = FALSE,
                            show_hierarchy = FALSE,
@@ -157,8 +162,10 @@ netclu_infomap <- function(net,
                            path_temp = "infomap_temp",
                            delete_temp = TRUE) {
 
-  # Control and set binpath
+  # Control binpath, path_temp and delete_temp
   controls(args = binpath, data = NULL, type = "character")
+  controls(args = path_temp, data = NULL, type = "character")
+  controls(args = delete_temp, data = NULL, type = "boolean")
   if (binpath == "tempdir") {
     binpath <- tempdir()
   } else if (binpath == "pkgfolder") {
@@ -172,13 +179,6 @@ netclu_infomap <- function(net,
 
   # Control version
   controls(args = version, data = NULL, type = "character")
-  # versiondispo <- list.files(paste0(binpath, "/bin/INFOMAP/"))
-  # if (!(version %in% versiondispo)) {
-  #  stop(paste0(
-  #    "Please choose a version of Infomap already installed: ",
-  #    paste(versiondispo, collapse = " ")
-  #  ), call. = FALSE)
-  # }
 
   # Check OS
   os <- Sys.info()[["sysname"]]
@@ -193,9 +193,22 @@ netclu_infomap <- function(net,
       paste0(binpath, "/bin/INFOMAP/", version, "/")
     ))
   } else {
+    # Control parameters INFOMAP
+    if(!is.null(seed)){
+      controls(args = seed, data = NULL, type = "strict_positive_integer")
+    }
+    controls(args = nbmod, data = NULL, type = "positive_integer")
+    controls(args = markovtime, data = NULL, type = "strict_positive_numeric")
+    controls(args = numtrials, data = NULL, type = "strict_positive_integer")
+    controls(args = twolevel, data = NULL, type = "boolean")
+    controls(args = show_hierarchy, data = NULL, type = "boolean")
+    
     # Control input net (+ check similarity if not bipartite)
     controls(args = bipartite_version, data = NULL, type = "boolean")
     controls(args = bipartite, data = NULL, type = "boolean")
+    if(bipartite_version){
+      bipartite = bipartite_version
+    }
     isbip <- bipartite
     if(!isbip){
       controls(args = NULL, data = net, type = "input_similarity")
@@ -205,25 +218,31 @@ netclu_infomap <- function(net,
     # Control input weight & index
     controls(args = weight, data = net, type = "input_net_weight")
     if (weight) {
+      controls(args = cut_weight, data = net, type = "positive_numeric")
       controls(args = index, data = net, type = "input_net_index")
       net[, 3] <- net[, index]
       net <- net[, 1:3]
-      controls(args = NULL, data = net, type = "input_net_index_value")
+      controls(args = NULL, data = net, type = "input_net_index_positive_value")
     }
 
     # Control input bipartite
     if (isbip) {
       controls(args = NULL, data = net, type = "input_net_bip")
+      if(site_col == species_col){
+        stop("site_col and species_col should not be the same.", call. = FALSE)
+      }
       controls(args = site_col, data = net, type = "input_net_bip_col")
       controls(args = species_col, data = net, type = "input_net_bip_col")
+      controls(args = return_node_type, data = NULL, type = "character")
       if (!(return_node_type %in% c("both", "sites", "species"))) {
         stop("Please choose return_node_type among the followings values:
-both, sites and species", call. = FALSE)
+both, sites or species", call. = FALSE)
       }
     }
 
-    # Control input directed
+    # Control input loop or directed
     if (!isbip) {
+      controls(args = NULL, data = net, type = "input_net_isloop")
       controls(args = directed, data = net, type = "input_net_directed")
     } else {
       if (directed) {
@@ -233,28 +252,14 @@ both, sites and species", call. = FALSE)
       }
     }
 
-    # Control parameters INFOMAP
-    controls(args = nbmod, data = NULL, type = "positive_integer")
-    controls(args = markovtime, data = NULL, type = "strict_positive_numeric")
-    controls(args = seed, data = NULL, type = "positive_integer")
-    if (seed == 0) {
-      seed <- round(as.numeric(as.POSIXct(Sys.time())))
-    }
-    controls(args = numtrials, data = NULL, type = "strict_positive_integer")
-    controls(args = twolevel, data = NULL, type = "boolean")
-    controls(args = show_hierarchy, data = NULL, type = "boolean")
-
-
-    # Control temp folder + create temp folder
-    path_temp <- controls(args = path_temp, data = NULL, type = "character")
-    controls(args = delete_temp, data = NULL, type = "boolean")
+    # Create temp folder
     if (path_temp == "infomap_temp") {
       path_temp <- paste0(
         binpath,
         "/bin/",
         path_temp,
         "_",
-        round(as.numeric(as.POSIXct(Sys.time())))
+        as.numeric(as.POSIXct(Sys.time()))
       )
     } else {
       if (dir.exists(path_temp)) {
@@ -299,10 +304,6 @@ both, sites and species", call. = FALSE)
     } else {
       idnode1 <- as.character(net[, 1])
       idnode2 <- as.character(net[, 2])
-      if (isbip) {
-        message("The network seems to be bipartite! 
-The bipartite or bipartite_version argument should probably be set to TRUE.")
-      }
       idnode <- c(idnode1, idnode2)
       idnode <- idnode[!duplicated(idnode)]
       nbsites <- length(idnode)
@@ -315,7 +316,12 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
 
     if (weight) {
       netemp <- cbind(netemp, net[, 3])
-      netemp <- netemp[netemp[, 3] > 0, ]
+      netemp <- netemp[netemp[, 3] > cut_weight, ]
+    }
+    
+    if(dim(netemp)[1]==0){
+      stop("The network is empty. 
+         Please check your data or choose an appropriate cut_weight value.")
     }
 
     # Class preparation
@@ -323,12 +329,14 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
 
     outputs$args <- list(
       weight = weight,
+      cut_weight = cut_weight,
       index = index,
+      seed = seed,
       nbmod = nbmod,
       markovtime = markovtime,
-      seed = seed,
       numtrials = numtrials,
       twolevel = twolevel,
+      show_hierarchy = show_hierarchy,
       directed = directed,
       bipartite_version = bipartite_version,
       bipartite = bipartite,
@@ -345,7 +353,9 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
       bipartite = isbip,
       weight = weight,
       pairwise = ifelse(isbip, FALSE, TRUE),
-      pairwise_metric = ifelse(isbip, NA, index),
+      pairwise_metric = ifelse(!isbip & weight, 
+                               ifelse(is.numeric(index), names(net)[3], index), 
+                               NA),
       dissimilarity = FALSE,
       nb_sites = nbsites,
       hierarchical = FALSE
@@ -368,11 +378,19 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
     }
 
     # Prepare command to run INFOMAP
-    cmd <- paste0(
-      "--silent --seed ", seed,
-      " --num-trials ", numtrials,
-      " --markov-time ", markovtime
-    )
+    if(is.null(seed)){
+      cmd <- paste0(
+        " --silent --num-trials ", numtrials,
+        " --markov-time ", markovtime
+      )
+    }else{
+      cmd <- paste0(
+        "--silent --seed ", seed,
+        " --num-trials ", numtrials,
+        " --markov-time ", markovtime
+      )
+    }
+
     if (nbmod > 0) {
       cmd <- paste0(cmd, " --preferred-number-of-modules ", nbmod)
     }
@@ -424,11 +442,11 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
     nblev <- dim(cominf)[2]
     cominf <- cominf[, nblev:1] # Reverse column order
 
-    com <- data.frame(ID = idnode[, 2], dum = 0) # Dummy level
+    com <- data.frame(ID = idnode[, 2], dum = NA) # Dummy level
     com[match(idinf, idnode[, 1]), 2] <- cominf[, 1]
 
     for (knblev in 2:nblev) {
-      com$temp <- 0
+      com$temp <- NA
       com[match(idinf, idnode[, 1]), (knblev + 1)] <- cominf[, knblev]
       colnames(com)[(knblev + 1)] <- paste0("V", (knblev + 1))
     }
@@ -471,10 +489,10 @@ The bipartite or bipartite_version argument should probably be set to TRUE.")
       ],
       n_clust = apply(
         outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
-        2, function(x) length(unique(x))
+        2, function(x) length(unique(x[!is.na(x)]))
       )
     )
-    if (!twolevel & show_hierarchy) {
+    if (nrow(outputs$cluster_info)>1) {
       outputs$cluster_info$hierarchical_level <- 1:nrow(outputs$cluster_info)
       outputs$inputs$hierarchical <- TRUE
     }

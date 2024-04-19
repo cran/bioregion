@@ -11,22 +11,24 @@
 #' @param weight a `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
 #' 
+#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' between sites with a weight strictly lower than this value will not be 
+#' considered (O by default).
+#' 
 #' @param index name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
+#' 
+#' @param seed for the random number generator (NULL for random by default).
 #'
-#' @param objective_function Whether to use the Constant Potts Model (CPM) or
-#' modularity. Must be either "CPM" or "modularity".
+#' @param objective_function a string indicating the objective function to use,
+#' the Constant Potts Model ("CPM") or "modularity" ("CPM" by default).
 #'
-#' @param resolution_parameter The resolution parameter to use. Higher
+#' @param resolution_parameter the resolution parameter to use. Higher
 #' resolutions lead to more smaller communities, while lower resolutions lead
 #' to fewer larger communities.
 #'
-#' @param beta Parameter affecting the randomness in the Leiden algorithm. This
+#' @param beta parameter affecting the randomness in the Leiden algorithm. This
 #' affects only the refinement step of the algorithm.
-#'
-#' @param initial_membership If provided, the Leiden algorithm will try to
-#' improve this provided membership. If no argument is provided, the aglorithm
-#' simply starts from the singleton partition.
 #'
 #' @param n_iterations the number of iterations to iterate the Leiden
 #' algorithm. Each iteration may improve the partition further.
@@ -49,7 +51,8 @@
 #' (`return_node_type = "both"` by default).
 #' 
 #' @param algorithm_in_output a `boolean` indicating if the original output
-#' of `communities` should be returned in the output (see Value).
+#' of [cluster_leiden][igraph::cluster_leiden] should be returned in the 
+#' output (`TRUE` by default, see Value).
 #'
 #' @details
 #' This function is based on the Leiden algorithm
@@ -73,7 +76,7 @@
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
@@ -82,7 +85,7 @@
 #' \item{**clusters**: `data.frame` containing the clustering results}}
 #'
 #' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can
-#' find an "communities" object, output of
+#' find the output of
 #' [cluster_leiden][igraph::cluster_leiden].
 #'
 #' @author
@@ -110,11 +113,12 @@
 
 netclu_leiden <- function(net,
                           weight = TRUE,
+                          cut_weight = 0,
                           index = names(net)[3],
-                          objective_function = c("CPM", "modularity"),
+                          seed = NULL,
+                          objective_function = "CPM",
                           resolution_parameter = 1,
                           beta = 0.01,
-                          initial_membership = NULL,
                           n_iterations = 2,
                           vertex_weights = NULL,
                           bipartite = FALSE,
@@ -134,42 +138,50 @@ netclu_leiden <- function(net,
   # Control input weight & index
   controls(args = weight, data = net, type = "input_net_weight")
   if (weight) {
+    controls(args = cut_weight, data = net, type = "positive_numeric")
     controls(args = index, data = net, type = "input_net_index")
     net[, 3] <- net[, index]
     net <- net[, 1:3]
-    controls(args = NULL, data = net, type = "input_net_index_value")
+    controls(args = NULL, data = net, type = "input_net_index_positive_value")
   }
   
   # Control input bipartite
   if (isbip) {
     controls(args = NULL, data = net, type = "input_net_bip")
+    if(site_col == species_col){
+      stop("site_col and species_col should not be the same.", call. = FALSE)
+    }
     controls(args = site_col, data = net, type = "input_net_bip_col")
     controls(args = species_col, data = net, type = "input_net_bip_col")
+    controls(args = return_node_type, data = NULL, type = "character")
     if (!(return_node_type %in% c("both", "sites", "species"))) {
       stop("Please choose return_node_type among the followings values:
-both, sites and species", call. = FALSE)
+both, sites or species", call. = FALSE)
     }
   }
   
-  # Control input directed
+  # Control input loop or directed
+  controls(args = NULL, data = net, type = "input_net_isloop")
   controls(args = NULL, data = net, type = "input_net_isdirected")
   
   # Control algorithm_in_output
   controls(args = algorithm_in_output, data = NULL, type = "boolean")
   
-  # Controls for other arguments
-  if(!is.character(objective_function)){
-    stop("objective_function must be either 'CPM' or 'modularity'.")
+  # Control parameters LEIDEN
+  if(!is.null(seed)){
+    controls(args = seed, data = NULL, type = "strict_positive_integer")
   }
-  if(!all(objective_function %in% c("CPM", "modularity"))){
-    stop("objective_function must be either 'CPM' or 'modularity'.")
+  controls(args = objective_function, data = NULL, type = "character")
+  if (!(objective_function %in% c("CPM", "modularity"))) {
+    stop("Please choose objective_function among the following values: 
+CPM or modularity", call. = FALSE)
   }
-  
   controls(args = resolution_parameter, data = NULL, type = "positive_integer")
   controls(args = beta, data = NULL, type = "numeric")
-  # controls(args = initial_membership, data = NULL, type = "boolean")
-  controls(args = n_iterations, data = NULL, type = "positive_integer")
-  # controls(args = vertex_weights, data = NULL, type = "boolean")
+  controls(args = n_iterations, data = NULL, type = "strict_positive_integer")
+  if(!is.null(vertex_weights)){
+    controls(args = vertex_weights, data = NULL, type = "numeric_vector")
+  }
   
   # Prepare input
   if (isbip) {
@@ -188,10 +200,6 @@ both, sites and species", call. = FALSE)
   } else {
     idnode1 <- as.character(net[, 1])
     idnode2 <- as.character(net[, 2])
-    if (isbip) {
-      message("The network seems to be bipartite! 
-The bipartite argument should probably be set to TRUE.")
-    }
     idnode <- c(idnode1, idnode2)
     idnode <- idnode[!duplicated(idnode)]
     nbsites <- length(idnode)
@@ -204,7 +212,7 @@ The bipartite argument should probably be set to TRUE.")
   
   if (weight) {
     netemp <- cbind(netemp, net[, 3])
-    netemp <- netemp[netemp[, 3] > 0, ]
+    netemp <- netemp[netemp[, 3] > cut_weight, ]
     colnames(netemp)[3] <- "weight"
   }
   
@@ -213,7 +221,14 @@ The bipartite argument should probably be set to TRUE.")
   
   outputs$args <- list(
     weight = weight,
+    cut_weight = cut_weight,
     index = index,
+    seed = seed,
+    objective_function = objective_function,
+    resolution_parameter = resolution_parameter,
+    beta = beta,
+    n_iterations = n_iterations,
+    vertex_weights = vertex_weights,
     bipartite = bipartite,
     site_col = site_col,
     species_col = species_col,
@@ -225,7 +240,9 @@ The bipartite argument should probably be set to TRUE.")
     bipartite = isbip,
     weight = weight,
     pairwise = ifelse(isbip, FALSE, TRUE),
-    pairwise_metric = ifelse(isbip, NA, index),
+    pairwise_metric = ifelse(!isbip & weight, 
+                             ifelse(is.numeric(index), names(net)[3], index), 
+                             NA),
     dissimilarity = FALSE,
     nb_sites = nbsites,
     hierarchical = FALSE
@@ -233,20 +250,31 @@ The bipartite argument should probably be set to TRUE.")
   
   outputs$algorithm <- list()
   
-  # Run algo
+  # Run algo (with seed)
   net <- igraph::graph_from_data_frame(netemp, directed = FALSE)
-  outalg <- igraph::cluster_leiden(
-    graph = net,
-    weight = weight,
-    objective_function = objective_function,
-    resolution_parameter = resolution_parameter,
-    beta = beta,
-    initial_membership = initial_membership,
-    n_iterations = n_iterations,
-    vertex_weights = vertex_weights)
+  if(is.null(seed)){
+    outalg <- igraph::cluster_leiden(
+      graph = net,
+      objective_function = objective_function,
+      resolution_parameter = resolution_parameter,
+      beta = beta,
+      n_iterations = n_iterations,
+      vertex_weights = vertex_weights)
+  }else{
+    set.seed(seed)
+    outalg <- igraph::cluster_leiden(
+      graph = net,
+      objective_function = objective_function,
+      resolution_parameter = resolution_parameter,
+      beta = beta,
+      n_iterations = n_iterations,
+      vertex_weights = vertex_weights)
+    rm(.Random.seed, envir=globalenv())
+  }
+
   comtemp <- cbind(as.numeric(outalg$names), as.numeric(outalg$membership))
   
-  com <- data.frame(ID = idnode[, 2], Com = 0)
+  com <- data.frame(ID = idnode[, 2], Com = NA)
   com[match(comtemp[, 1], idnode[, 1]), 2] <- comtemp[, 2]
   
   # Rename and reorder columns
@@ -278,7 +306,7 @@ The bipartite argument should probably be set to TRUE.")
     ],
     n_clust = apply(
       outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
-      2, function(x) length(unique(x))))
+      2, function(x) length(unique(x[!is.na(x)]))))
   
   # Return outputs
   class(outputs) <- append("bioregion.clusters", class(outputs))

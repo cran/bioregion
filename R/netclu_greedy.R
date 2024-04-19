@@ -12,6 +12,10 @@
 #' @param weight a `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
 #' 
+#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' between sites with a weight strictly lower than this value will not be 
+#' considered (O by default).
+#' 
 #' @param index name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
 #' 
@@ -25,11 +29,12 @@
 #' (i.e. feature nodes).
 #' 
 #' @param return_node_type a `character` indicating what types of nodes
-#' ("sites", "species" or "both") should be returned in the output
+#' (`site`, `species` or `both`) should be returned in the output
 #' (`return_node_type = "both"` by default).
 #' 
 #' @param algorithm_in_output a `boolean` indicating if the original output
-#' of `communities` should be returned in the output (see Value).
+#' of [cluster_fast_greedy][igraph::cluster_fast_greedy] should be returned in 
+#' the output (`TRUE` by default, see Value).
 #'
 #' @export
 #' @details
@@ -47,14 +52,14 @@
 #' dedicated to the site nodes (i.e. primary nodes) and species nodes (i.e.
 #' feature nodes) using the arguments `site_col` and `species_col`.
 #' The type of nodes returned in the output can be chosen with the argument
-#' `return_node_type` equal to `"both"` to keep both types of nodes,
-#' `"sites"` to preserve only the sites nodes and `"species"` to
+#' `return_node_type` equal to `both` to keep both types of nodes,
+#' `sites` to preserve only the sites nodes and `species` to
 #' preserve only the species nodes.
 #'
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
@@ -63,7 +68,7 @@
 #' \item{**clusters**: `data.frame` containing the clustering results}}
 #'
 #' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can
-#' find an "communities" object, output of
+#' find the output of
 #' [cluster_fast_greedy][igraph::cluster_fast_greedy].
 #'
 #' @author
@@ -91,6 +96,7 @@
 
 netclu_greedy <- function(net,
                           weight = TRUE,
+                          cut_weight = 0,
                           index = names(net)[3],
                           bipartite = FALSE,
                           site_col = 1,
@@ -109,24 +115,30 @@ netclu_greedy <- function(net,
   # Control input weight & index
   controls(args = weight, data = net, type = "input_net_weight")
   if (weight) {
+    controls(args = cut_weight, data = net, type = "positive_numeric")
     controls(args = index, data = net, type = "input_net_index")
     net[, 3] <- net[, index]
     net <- net[, 1:3]
-    controls(args = NULL, data = net, type = "input_net_index_value")
+    controls(args = NULL, data = net, type = "input_net_index_positive_value")
   }
 
   # Control input bipartite
   if (isbip) {
     controls(args = NULL, data = net, type = "input_net_bip")
+    if(site_col == species_col){
+      stop("site_col and species_col should not be the same.", call. = FALSE)
+    }
     controls(args = site_col, data = net, type = "input_net_bip_col")
     controls(args = species_col, data = net, type = "input_net_bip_col")
+    controls(args = return_node_type, data = NULL, type = "character")
     if (!(return_node_type %in% c("both", "sites", "species"))) {
       stop("Please choose return_node_type among the followings values:
-both, sites and species", call. = FALSE)
+both, sites or species", call. = FALSE)
     }
   }
 
-  # Control input directed
+  # Control input loop or directed
+  controls(args = NULL, data = net, type = "input_net_isloop")
   controls(args = NULL, data = net, type = "input_net_isdirected")
 
   # Control algorithm_in_output
@@ -149,10 +161,6 @@ both, sites and species", call. = FALSE)
   } else {
     idnode1 <- as.character(net[, 1])
     idnode2 <- as.character(net[, 2])
-    if (isbip) {
-      message("The network seems to be bipartite! 
-The bipartite argument should probably be set to TRUE.")
-    }
     idnode <- c(idnode1, idnode2)
     idnode <- idnode[!duplicated(idnode)]
     nbsites <- length(idnode)
@@ -165,7 +173,7 @@ The bipartite argument should probably be set to TRUE.")
 
   if (weight) {
     netemp <- cbind(netemp, net[, 3])
-    netemp <- netemp[netemp[, 3] > 0, ]
+    netemp <- netemp[netemp[, 3] > cut_weight, ]
     colnames(netemp)[3] <- "weight"
   }
 
@@ -174,6 +182,7 @@ The bipartite argument should probably be set to TRUE.")
 
   outputs$args <- list(
     weight = weight,
+    cut_weight = cut_weight,
     index = index,
     bipartite = bipartite,
     site_col = site_col,
@@ -185,7 +194,9 @@ The bipartite argument should probably be set to TRUE.")
     bipartite = isbip,
     weight = weight,
     pairwise = ifelse(isbip, FALSE, TRUE),
-    pairwise_metric = ifelse(isbip, NA, index),
+    pairwise_metric = ifelse(!isbip & weight, 
+                             ifelse(is.numeric(index), names(net)[3], index), 
+                             NA),
     dissimilarity = FALSE,
     nb_sites = nbsites,
     hierarchical = FALSE)
@@ -197,7 +208,7 @@ The bipartite argument should probably be set to TRUE.")
   outalg <- igraph::cluster_fast_greedy(net)
   comtemp <- cbind(as.numeric(outalg$names), as.numeric(outalg$membership))
 
-  com <- data.frame(ID = idnode[, 2], Com = 0)
+  com <- data.frame(ID = idnode[, 2], Com = NA)
   com[match(comtemp[, 1], idnode[, 1]), 2] <- comtemp[, 2]
 
   # Rename and reorder columns
@@ -229,7 +240,7 @@ The bipartite argument should probably be set to TRUE.")
     ],
     n_clust = apply(
       outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
-      2, function(x) length(unique(x))))
+      2, function(x) length(unique(x[!is.na(x)]))))
 
   # Return outputs
   class(outputs) <- append("bioregion.clusters", class(outputs))

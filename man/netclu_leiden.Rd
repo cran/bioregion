@@ -7,11 +7,12 @@
 netclu_leiden(
   net,
   weight = TRUE,
+  cut_weight = 0,
   index = names(net)[3],
-  objective_function = c("CPM", "modularity"),
+  seed = NULL,
+  objective_function = "CPM",
   resolution_parameter = 1,
   beta = 0.01,
-  initial_membership = NULL,
   n_iterations = 2,
   vertex_weights = NULL,
   bipartite = FALSE,
@@ -30,22 +31,24 @@ column(s) are the similarity indices.}
 \item{weight}{a \code{boolean} indicating if the weights should be considered
 if there are more than two columns.}
 
+\item{cut_weight}{a minimal weight value. If \code{weight} is TRUE, the links
+between sites with a weight strictly lower than this value will not be
+considered (O by default).}
+
 \item{index}{name or number of the column to use as weight. By default,
 the third column name of \code{net} is used.}
 
-\item{objective_function}{Whether to use the Constant Potts Model (CPM) or
-modularity. Must be either "CPM" or "modularity".}
+\item{seed}{for the random number generator (NULL for random by default).}
 
-\item{resolution_parameter}{The resolution parameter to use. Higher
+\item{objective_function}{a string indicating the objective function to use,
+the Constant Potts Model ("CPM") or "modularity" ("CPM" by default).}
+
+\item{resolution_parameter}{the resolution parameter to use. Higher
 resolutions lead to more smaller communities, while lower resolutions lead
 to fewer larger communities.}
 
-\item{beta}{Parameter affecting the randomness in the Leiden algorithm. This
+\item{beta}{parameter affecting the randomness in the Leiden algorithm. This
 affects only the refinement step of the algorithm.}
-
-\item{initial_membership}{If provided, the Leiden algorithm will try to
-improve this provided membership. If no argument is provided, the aglorithm
-simply starts from the singleton partition.}
 
 \item{n_iterations}{the number of iterations to iterate the Leiden
 algorithm. Each iteration may improve the partition further.}
@@ -69,12 +72,13 @@ interpret the vertex weights.}
 (\code{return_node_type = "both"} by default).}
 
 \item{algorithm_in_output}{a \code{boolean} indicating if the original output
-of \code{communities} should be returned in the output (see Value).}
+of \link[igraph:cluster_leiden]{cluster_leiden} should be returned in the
+output (\code{TRUE} by default, see Value).}
 }
 \value{
 A \code{list} of class \code{bioregion.clusters} with five slots:
 \enumerate{
-\item{\strong{name}: \verb{character string} containing the name of the algorithm}
+\item{\strong{name}: \code{character} containing the name of the algorithm}
 \item{\strong{args}: \code{list} of input arguments as provided by the user}
 \item{\strong{inputs}: \code{list} of characteristics of the clustering process}
 \item{\strong{algorithm}: \code{list} of all objects associated with the
@@ -83,7 +87,7 @@ clustering procedure, such as original cluster objects (only if
 \item{\strong{clusters}: \code{data.frame} containing the clustering results}}
 
 In the \code{algorithm} slot, if \code{algorithm_in_output = TRUE}, users can
-find an "communities" object, output of
+find the output of
 \link[igraph:cluster_leiden]{cluster_leiden}.
 }
 \description{

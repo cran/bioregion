@@ -12,27 +12,36 @@
 #' @param index name or number of the dissimilarity column to use. By default, 
 #' the third column name of `dissimilarity` is used.
 #' 
-#' @param n_clust an `integer` or a `vector` of `integers` specifying the
+#' @param seed for the random number generator (NULL for random by default).
+#' 
+#' @param n_clust an `integer` or an `integer` vector specifying the
 #' requested number(s) of clusters.
 #' 
 #' @param numlocal an `integer` defining the number of samples to draw.
 #' 
-#' @param maxneighbor A positive numeric defining the sampling rate.
+#' @param maxneighbor a positive `numeric` defining the sampling rate.
 #' 
-#' @param seed an `integer` to define a generator of random numbers.
+#' @param algorithm_in_output a `boolean` indicating if the original output
+#' of [fastclarans][fastkmedoids::fastclarans] should be returned in the output (`TRUE` by 
+#' default, see Value).
 #' 
 #' @details
-#' Based on fastkmedoids R package.
+#' Based on [fastkmedoids](https://cran.r-project.org/package=fastkmedoids)
+#' package ([fastclarans][fastkmedoids::fastclarans]).
 #'
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
 #'  clustering procedure, such as original cluster objects}
 #' \item{**clusters**: `data.frame` containing the clustering results}}
+#' 
+#' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can
+#' find the output of
+#' [fastclarans][fastkmedoids::fastclarans].
 #' 
 #' @references
 #' \insertRef{Schubert2019}{bioregion}
@@ -65,79 +74,63 @@
 
 nhclu_clarans <- function(dissimilarity,
                           index = names(dissimilarity)[3],
-                          n_clust = NULL,
-                          numlocal = 2L,
+                          seed = NULL,
+                          n_clust = c(1,2,3),
+                          numlocal = 2,
                           maxneighbor = 0.025,
-                          seed = 123456789L){
+                          algorithm_in_output = TRUE){
   
   # 1. Controls ---------------------------------------------------------------
-  if(inherits(dissimilarity, "bioregion.pairwise.metric")){
-    if(attr(dissimilarity, "type") == "similarity"){
-      stop("dissimilarity seems to be a similarity object.
-         nhclu_pam() should be applied on dissimilarity, not similarities.
-         Use similarity_to_dissimilarity() before using nhclu_pam()")
-    }
-    if(is.numeric(index)){
-      index <- names(dissimilarity)[index]
-    }
-    if(!(index %in% colnames(dissimilarity))){
-      stop("Argument index should be one of the column names of dissimilarity")
-    }
-  } else if(!any(inherits(dissimilarity, "bioregion.pairwise.metric"),
-                 inherits(dissimilarity, "dist")))
-  {
-    if(is.numeric(index)) {
-      index <- names(dissimilarity)[index]
-    }
-    if(is.null(index) || !(index %in% colnames(dissimilarity))) {
-      stop("dissimilarity is not a bioregion.pairwise.metric object, a
-           dissimilarity matrix (class dist) or a data.frame with at least 3
-           columns (site1, site2, and your dissimilarity index)")
-    }
-  }
-  
-  if(!is.null(n_clust)){
-    if(is.numeric(n_clust)) {
-      if(any(!(n_clust %% 1 == 0))) {
-        stop("n_clust must an integer or a vector of integers determining the
-             number of clusters.")
-      }
-      # Add test to see if n_clust is lower than the number of sites
-    } else {
-      stop("n_clust must an integer or a vector of integers determining the
-           number of clusters.")
-    }
-  } else{
-    stop("n_clust must an integer or a vector of integers determining the
-           number of clusters.")
-  }
-  
-  if(!inherits(dissimilarity, "dist")) {
+  controls(args = NULL, data = dissimilarity, type = "input_nhandhclu")
+  if(!inherits(dissimilarity, "dist")){
+    controls(args = NULL, data = dissimilarity, type = "input_dissimilarity")
+    controls(args = NULL, data = dissimilarity, 
+             type = "input_data_frame_nhandhclu")
+    controls(args = index, data = dissimilarity, type = "input_net_index")
+    net <- dissimilarity
+    net[, 3] <- net[, index]
+    net <- net[, 1:3]
+    controls(args = NULL, data = net, type = "input_net_index_value")
     dist.obj <- stats::as.dist(
-      net_to_mat(dissimilarity[, c(colnames(dissimilarity)[1:2], index)],
+      net_to_mat(net,
                  weight = TRUE, squared = TRUE, symmetrical = TRUE))
-    
   } else {
+    controls(args = NULL, data = dissimilarity, type = "input_dist")
     dist.obj <- dissimilarity
+    if(is.null(labels(dist.obj))){
+      attr(dist.obj, "Labels") <- paste0(1:attr(dist.obj, "Size"))
+      message("No labels detected, they have been assigned automatically.")
+    }
   }
   
+  if(!is.null(seed)){
+    controls(args = seed, data = NULL, type = "strict_positive_integer")
+  }
+  controls(args = n_clust, data = NULL, 
+           type = "strict_positive_integer_vector")
   controls(args = numlocal, data = NULL, type = "positive_integer")
   controls(args = maxneighbor, data = NULL, type = "positive_numeric")
-  controls(args = seed, data = NULL, type = "positive_integer")
+  controls(args = algorithm_in_output, data = NULL, type = "boolean")
   
   # 2. Function ---------------------------------------------------------------
   # Output format
-  outputs <- list(name = "clarans")
+  outputs <- list(name = "nhclu_clarans")
   
   outputs$args <- list(index = index,
+                       seed = seed,
                        n_clust = n_clust,
                        numlocal = numlocal,
                        maxneighbor = maxneighbor,
-                       seed = seed)
+                       algorithm_in_output = algorithm_in_output)
   
   outputs$inputs <- list(bipartite = FALSE,
                          weight = TRUE,
-                         pairwise_metric = TRUE,
+                         pairwise = TRUE,
+                         pairwise_metric = ifelse(!inherits(dissimilarity, 
+                                                            "dist"), 
+                                                  ifelse(is.numeric(index), 
+                                                         names(net)[3], index), 
+                                                  NA),
                          dissimilarity = TRUE,
                          nb_sites = attr(dist.obj, "Size"),
                          hierarchical = FALSE)
@@ -152,24 +145,36 @@ nhclu_clarans <- function(dissimilarity,
   outputs$clusters$name <- labels(dist.obj)
   
   # CLARANS algorithm
-  outputs$algorithm$clarans <-
-    lapply(n_clust,
-           function(x)
-             fastkmedoids::fastclarans(rdist = dist.obj,
-                                       n = nrow(dist.obj),
-                                       k = x,
-                                       numlocal = numlocal,
-                                       maxneighbor = maxneighbor,
-                                       seed = seed))
-  
-  names(outputs$algorithm$clarans) <- paste0("K_", n_clust)
+  if(is.null(seed)){
+    outputs$algorithm <-
+      lapply(n_clust,
+             function(x)
+               fastkmedoids::fastclarans(rdist = dist.obj,
+                                         n = nrow(dist.obj),
+                                         k = x,
+                                         numlocal = numlocal,
+                                         maxneighbor = maxneighbor,
+                                         seed = as.numeric(as.POSIXct(
+                                           Sys.time())) + sample(-10:10, 1)))
+  }else{
+    outputs$algorithm <-
+      lapply(n_clust,
+             function(x)
+               fastkmedoids::fastclarans(rdist = dist.obj,
+                                         n = nrow(dist.obj),
+                                         k = x,
+                                         numlocal = numlocal,
+                                         maxneighbor = maxneighbor,
+                                         seed = seed))
+  }
+  names(outputs$algorithm) <- paste0("K_", n_clust)
   
   outputs$clusters <- data.frame(
     outputs$clusters,
-    data.frame(lapply(names(outputs$algorithm$clarans),
-                      function(x) outputs$algorithm$clarans[[x]]@assignment)))
+    data.frame(lapply(names(outputs$algorithm),
+                      function(x) outputs$algorithm[[x]]@assignment)))
   
-  outputs$clusters <- knbclu(outputs$clusters, reorder = FALSE)
+  outputs$clusters <- knbclu(outputs$clusters, reorder = TRUE)
   
   outputs$cluster_info <- data.frame(
     partition_name = names(outputs$clusters)[2:length(outputs$clusters),
@@ -177,6 +182,11 @@ nhclu_clarans <- function(dissimilarity,
     n_clust = apply(outputs$clusters[, 2:length(outputs$clusters),
                                      drop = FALSE],
                     2, function(x) length(unique(x))))
+  
+  # Set algorithm in output
+  if (!algorithm_in_output) {
+    outputs$algorithm <- NA
+  }
   
   class(outputs) <- append("bioregion.clusters", class(outputs))
   

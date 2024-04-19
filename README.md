@@ -11,6 +11,7 @@ coverage](https://codecov.io/gh/bioRgeo/bioregion/branch/master/graph/badge.svg)
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/bioregion)](https://cran.r-project.org/package=bioregion)
 [![rstudio mirror
 downloads](http://cranlogs.r-pkg.org/badges/bioregion)](https://r-pkg.org:443/pkg/bioregion)
+[![DOI](https://zenodo.org/badge/612244739.svg)](https://zenodo.org/doi/10.5281/zenodo.10843109)
 <!-- badges: end -->
 
 This **R package** gathers a comprehensive set of algorithms to perform
@@ -20,7 +21,7 @@ Bioregionalisation methods can be based on hierarchical clustering
 algorithms, non-hierarchical clustering algorithms or network
 algorithms.
 
-# :arrow_double_down: Installation
+## :arrow_double_down: Installation
 
 The package can be installed with the following command line in R
 session:
@@ -38,7 +39,7 @@ or from GitHub
 devtools::install_github("bioRgeo/bioregion")
 ```
 
-# :scroll: Vignettes
+## :scroll: Vignettes
 
 We wrote several vignettes that will help you using the **bioregion R
 package**. Vignettes available are the following ones: <br>
@@ -57,8 +58,10 @@ package**. Vignettes available are the following ones: <br>
   clustering](https://bioRgeo.github.io/bioregion/articles/a4_3_network_clustering.html)**
 - **[4.4
   Microbenchmark](https://bioRgeo.github.io/bioregion/articles/a4_4_microbenchmark.html)**
-- **[5.
-  Visualization](https://bioRgeo.github.io/bioregion/articles/a5_visualization.html)**
+- **[5.1
+  Visualization](https://bioRgeo.github.io/bioregion/articles/a5_1_visualization.html)**
+- **[5.2 Compare
+  partitions](https://bioRgeo.github.io/bioregion/articles/a5_2_compare_partitions.html)**
 
 Alternatively, if you prefer to view the vignettes in R, you can install
 the package with `build_vignettes = TRUE`. But be aware that some
@@ -72,18 +75,18 @@ remotes::install_github("bioRgeo/bioregion",
 vignette("bioregion")
 ```
 
-# :desktop_computer: Functions
+## :desktop_computer: Functions
 
 An overview of all functions and data is given
 **[here](https://bioRgeo.github.io/bioregion/reference/index.html)**.
 
-# :bug: Find a bug?
+## :bug: Find a bug?
 
 Thank you for finding it. Head over to the GitHub Issues tab and let us
 know about it. Alternatively, you can also send us an e-mail. We will
 try to get to it as soon as we can!
 
-# References and dependencies
+## References and dependencies
 
 `bioregion` depends on `ape`, `bipartite`, `cluster`, `data.table`,
 `dbscan`, `dynamicTreeCut`, `earth`, `fastcluster`, `ggplot2`,

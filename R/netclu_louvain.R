@@ -11,14 +11,21 @@
 #' @param weight a `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
 #'
+#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' between sites with a weight strictly lower than this value will not be 
+#' considered (O by default).
+#'
 #' @param index name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
 #'
 #' @param lang a string indicating what version of Louvain should be used
-#' (igraph or Cpp, see Details).
+#' (`igraph` or `cpp`, see Details).
 #' 
 #' @param resolution a resolution parameter to adjust the modularity 
 #' (1 is chosen by default, see Details).
+#' 
+#' @param seed for the random number generator (only when `lang = "igraph"`, 
+#' NULL for random by default).
 #'
 #' @param q the quality function used to compute partition of the graph
 #' (modularity is chosen by default, see Details).
@@ -39,7 +46,7 @@
 #' (i.e. feature nodes).
 #'
 #' @param return_node_type a `character` indicating what types of nodes
-#' ("sites", "species" or "both") should be returned in the output
+#' (`site`, `species` or `both`) should be returned in the output
 #' (`return_node_type = "both"` by default).
 #'
 #' @param binpath a `character` indicating the path to the bin folder
@@ -52,8 +59,8 @@
 #' be removed (see Details).
 #'
 #' @param algorithm_in_output a `boolean` indicating if the original output
-#' of `communities` should be returned in the output (see Value).
-#' Default to TRUE.
+#' of [cluster_louvain][igraph::cluster_louvain] should be returned in the 
+#' output (`TRUE` by default, see Value). 
 #'
 #' @details
 #' Louvain is a network community detection algorithm proposed in
@@ -76,9 +83,9 @@
 #' "Modularity"), 1 for the Zahn-Condorcet criterion, 2 for the
 #' Owsinski-Zadrozny criterion (you should specify the value of the parameter
 #' with the `c` argument), 3 for the Goldberg Density criterion, 4 for the
-#' A-weighted Condorcet criterion,5 for the Deviation to Indetermination
+#' A-weighted Condorcet criterion, 5 for the Deviation to Indetermination
 #' criterion, 6 for the Deviation to Uniformity criterion, 7 for the Profile
-#' Difference criterion, 8	for the Shi-Malik criterion (you should specify the
+#' Difference criterion, 8 for the Shi-Malik criterion (you should specify the
 #' value of kappa_min with `k` argument) and 9 for the Balanced Modularity
 #' criterion.
 #'
@@ -105,13 +112,13 @@
 #' site nodes (i.e. primary nodes) and species nodes (i.e. feature nodes) using
 #' the arguments `site_col` and `species_col`. The type of nodes returned in
 #' the output can be chosen with the argument `return_node_type` equal to
-#' `"both"` to keep both types of nodes, `"sites"` to preserve only the sites
-#' nodes and `"species"` to preserve only the species nodes.
+#' `both` to keep both types of nodes, `sites` to preserve only the sites
+#' nodes and `species` to preserve only the species nodes.
 #'
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character string` containing the name of the algorithm}
+#' \item{**name**: `character` containing the name of the algorithm}
 #' \item{**args**: `list` of input arguments as provided by the user}
 #' \item{**inputs**: `list` of characteristics of the clustering process}
 #' \item{**algorithm**: `list` of all objects associated with the
@@ -120,8 +127,8 @@
 #' \item{**clusters**: `data.frame` containing the clustering results}}
 #'
 #' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can find an
-#' "communities" object, output of [cluster_louvain][igraph::cluster_louvain]
-#' if `lang = "igraph"` and the following element if `lang = "Cpp"`:
+#' the output of [cluster_louvain][igraph::cluster_louvain]
+#' if `lang = "igraph"` and the following element if `lang = "cpp"`:
 #'
 #' \itemize{
 #' \item{`cmd`: the command line use to run Louvain}
@@ -153,9 +160,11 @@
 
 netclu_louvain <- function(net,
                            weight = TRUE,
+                           cut_weight = 0,
                            index = names(net)[3],
-                           lang = "Cpp",
+                           lang = "igraph",
                            resolution = 1,
+                           seed = NULL,
                            q = 0,
                            c = 0.5,
                            k = 1,
@@ -179,35 +188,45 @@ netclu_louvain <- function(net,
   # Control input weight & index
   controls(args = weight, data = net, type = "input_net_weight")
   if (weight) {
+    controls(args = cut_weight, data = net, type = "positive_numeric")
     controls(args = index, data = net, type = "input_net_index")
     net[, 3] <- net[, index]
     net <- net[, 1:3]
-    controls(args = NULL, data = net, type = "input_net_index_value")
+    controls(args = NULL, data = net, type = "input_net_index_positive_value")
   }
 
   # Control input bipartite
   if (isbip) {
     controls(args = NULL, data = net, type = "input_net_bip")
+    if(site_col == species_col){
+      stop("site_col and species_col should not be the same.", call. = FALSE)
+    }
     controls(args = site_col, data = net, type = "input_net_bip_col")
     controls(args = species_col, data = net, type = "input_net_bip_col")
+    controls(args = return_node_type, data = NULL, type = "character")
     if (!(return_node_type %in% c("both", "sites", "species"))) {
       stop("Please choose return_node_type among the followings values:
-both, sites and species", call. = FALSE)
+both, sites or species", call. = FALSE)
     }
   }
 
-  # Control input directed
+  # Control input loop or directed
+  controls(args = NULL, data = net, type = "input_net_isloop")
   controls(args = NULL, data = net, type = "input_net_isdirected")
 
   # Control parameters LOUVAIN
-  if (!(lang %in% c("Cpp", "igraph"))) {
+  controls(args = lang, data = NULL, type = "character")
+  if (!(lang %in% c("cpp", "igraph"))) {
     stop("Please choose lang among the following values:
-Cpp, igraph", call. = FALSE)
+cpp or igraph", call. = FALSE)
   }
   controls(args = resolution, data = NULL, type = "strict_positive_numeric")
+  if(!is.null(seed)){
+    controls(args = seed, data = NULL, type = "strict_positive_integer")
+  }
   controls(args = q, data = NULL, type = "positive_integer")
   controls(args = c, data = NULL, type = "strict_positive_numeric")
-  if (c > 1) {
+  if (c >= 1) {
     stop("c must be in the interval (0,1)!", call. = FALSE)
   }
   controls(args = k, data = NULL, type = "strict_positive_numeric")
@@ -230,10 +249,6 @@ Cpp, igraph", call. = FALSE)
   } else {
     idnode1 <- as.character(net[, 1])
     idnode2 <- as.character(net[, 2])
-    if (isbip) {
-      message("The network seems to be bipartite! 
-The bipartite argument should probably be set to TRUE.")
-    }
     idnode <- c(idnode1, idnode2)
     idnode <- idnode[!duplicated(idnode)]
     nbsites <- length(idnode)
@@ -246,18 +261,20 @@ The bipartite argument should probably be set to TRUE.")
 
   if (weight) {
     netemp <- cbind(netemp, net[, 3])
-    netemp <- netemp[netemp[, 3] > 0, ]
+    netemp <- netemp[netemp[, 3] > cut_weight, ]
     colnames(netemp)[3] <- "weight"
   }
-
+  
   # Class preparation
   outputs <- list(name = "netclu_louvain")
 
   outputs$args <- list(
     weight = weight,
+    cut_weight = cut_weight,
     index = index,
     lang = lang,
     resolution = resolution,
+    seed = seed,
     q = q,
     c = c,
     k = k,
@@ -275,7 +292,9 @@ The bipartite argument should probably be set to TRUE.")
     bipartite = isbip,
     weight = weight,
     pairwise = ifelse(isbip, FALSE, TRUE),
-    pairwise_metric = ifelse(isbip, NA, index),
+    pairwise_metric = ifelse(!isbip & weight, 
+                             ifelse(is.numeric(index), names(net)[3], index), 
+                             NA),
     dissimilarity = FALSE,
     nb_sites = nbsites,
     hierarchical = FALSE
@@ -285,12 +304,19 @@ The bipartite argument should probably be set to TRUE.")
 
   # igraph
   if (lang == "igraph") {
-    # Run algo
+    
+    # Run algo (with seed)
     net <- igraph::graph_from_data_frame(netemp, directed = FALSE)
-    outalg <- igraph::cluster_louvain(net, resolution = resolution)
+    if(is.null(seed)){
+      outalg <- igraph::cluster_louvain(net, resolution = resolution)
+    }else{
+      set.seed(seed)
+      outalg <- igraph::cluster_louvain(net, resolution = resolution)
+      rm(.Random.seed, envir=globalenv())
+    }
     comtemp <- cbind(as.numeric(outalg$names), as.numeric(outalg$membership))
 
-    com <- data.frame(ID = idnode[, 2], Com = 0)
+    com <- data.frame(ID = idnode[, 2], Com = NA)
     com[match(comtemp[, 1], idnode[, 1]), 2] <- comtemp[, 2]
 
     # Set algorithm in outputs
@@ -300,11 +326,19 @@ The bipartite argument should probably be set to TRUE.")
     outputs$algorithm <- outalg
   }
 
-  # Cpp
-  if (lang == "Cpp") {
+  # cpp
+  if (lang == "cpp") {
+    
+    # Control empty network
+    if(dim(netemp)[1]==0){
+      stop("The network is empty. 
+         Please check your data or choose an appropriate cut_weight value.")
+    }
     
     # Control and set binpath
     controls(args = binpath, data = NULL, type = "character")
+    controls(args = path_temp, data = NULL, type = "character")
+    controls(args = delete_temp, data = NULL, type = "boolean")
     if (binpath == "tempdir") {
       binpath <- tempdir()
     } else if (binpath == "pkgfolder") {
@@ -330,8 +364,6 @@ The bipartite argument should probably be set to TRUE.")
       )
     } else {
       # Control temp folder + create temp folder
-      path_temp <- controls(args = path_temp, data = NULL, type = "character")
-      controls(args = delete_temp, data = NULL, type = "boolean")
       if (path_temp == "louvain_temp") {
         path_temp <- paste0(
           binpath,
@@ -355,6 +387,15 @@ The bipartite argument should probably be set to TRUE.")
           call. = FALSE
         )
       }
+      
+      # Reclassify nodes 
+      idnode1b <- as.character(netemp[, 1])
+      idnode2b <- as.character(netemp[, 2])
+      idnodeb <- c(idnode1b, idnode2b)
+      idnodeb <- idnodeb[!duplicated(idnodeb)]
+      idnodeb <- data.frame(IDb = 1:length(idnodeb), ID_NODEb = idnodeb)
+      netemp[,1] <- idnodeb[match(netemp[,1],idnodeb[,2]),1]
+      netemp[,2] <- idnodeb[match(netemp[,2],idnodeb[,2]),1]
 
       # Export input in LOUVAIN folder
       utils::write.table(netemp, paste0(path_temp, "/net.txt"),
@@ -425,12 +466,22 @@ The bipartite argument should probably be set to TRUE.")
 
       # Retrieve output from net.tree
       tree <- utils::read.table(paste0(path_temp, "/net.tree"))
-
-      id0 <- which(tree[, 1] == 0)
-      tree <- tree[(id0[1] + 1):(id0[2] - 1), ]
-
-      com <- data.frame(ID = idnode[, 2], Com = 0)
+      
+      # Retrieve hierarchy
+      tree <- reformat_hierarchy(tree, 
+                                 algo = "louvain")
+      
+      tree[,1] <- idnodeb[match(tree[,1],idnodeb[,1]),2]
+    
+      com <- data.frame(ID = idnode[, 2], Com = NA)
       com[match(tree[, 1], idnode[, 1]), 2] <- tree[, 2]
+      if(dim(tree)[2]>2){
+        for (k in 3:dim(tree)[2]) {
+          com$temp <- NA
+          com[match(tree[,1], idnode[, 1]), k] <- tree[, k]
+          colnames(com)[k] <- paste0("V", k)
+        }
+      }
 
       # Remove temporary file
       if (delete_temp) {
@@ -467,9 +518,14 @@ The bipartite argument should probably be set to TRUE.")
     ],
     n_clust = apply(
       outputs$clusters[, 2:length(outputs$clusters), drop = FALSE],
-      2, function(x) length(unique(x))
+      2, function(x) length(unique(x[!is.na(x)]))
     )
   )
+  
+  if (nrow(outputs$cluster_info)>1) {
+    outputs$cluster_info$hierarchical_level <- 1:nrow(outputs$cluster_info)
+    outputs$inputs$hierarchical <- TRUE
+  }
 
   # Return outputs
   class(outputs) <- append("bioregion.clusters", class(outputs))

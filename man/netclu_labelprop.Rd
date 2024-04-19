@@ -7,7 +7,9 @@
 netclu_labelprop(
   net,
   weight = TRUE,
+  cut_weight = 0,
   index = names(net)[3],
+  seed = NULL,
   bipartite = FALSE,
   site_col = 1,
   species_col = 2,
@@ -24,8 +26,14 @@ column(s) are the similarity indices.}
 \item{weight}{a \code{boolean} indicating if the weights should be considered
 if there are more than two columns.}
 
+\item{cut_weight}{a minimal weight value. If \code{weight} is TRUE, the links
+between sites with a weight strictly lower than this value will not be
+considered (O by default).}
+
 \item{index}{name or number of the column to use as weight. By default,
 the third column name of \code{net} is used.}
+
+\item{seed}{for the random number generator (NULL for random by default).}
 
 \item{bipartite}{a \code{boolean} indicating if the network is bipartite
 (see Details).}
@@ -37,16 +45,17 @@ the third column name of \code{net} is used.}
 (i.e. feature nodes).}
 
 \item{return_node_type}{a \code{character} indicating what types of nodes
-("sites", "species" or "both") should be returned in the output
+(\code{site}, \code{species} or \code{both}) should be returned in the output
 (\code{return_node_type = "both"} by default).}
 
 \item{algorithm_in_output}{a \code{boolean} indicating if the original output
-of \code{communities} should be returned in the output (see Value).}
+of \link[igraph:cluster_label_prop]{cluster_label_prop} should be returned in the
+output (\code{TRUE} by default, see Value).}
 }
 \value{
 A \code{list} of class \code{bioregion.clusters} with five slots:
 \enumerate{
-\item{\strong{name}: \verb{character string} containing the name of the algorithm}
+\item{\strong{name}: \code{character} containing the name of the algorithm}
 \item{\strong{args}: \code{list} of input arguments as provided by the user}
 \item{\strong{inputs}: \code{list} of characteristics of the clustering process}
 \item{\strong{algorithm}: \code{list} of all objects associated with the
@@ -55,7 +64,7 @@ clustering procedure, such as original cluster objects (only if
 \item{\strong{clusters}: \code{data.frame} containing the clustering results}}
 
 In the \code{algorithm} slot, if \code{algorithm_in_output = TRUE}, users can
-find an "communities" object, output of
+find a "communities" object, output of
 \link[igraph:cluster_label_prop]{cluster_label_prop}.
 }
 \description{
@@ -77,8 +86,8 @@ Do not forget to indicate which of the first two columns is
 dedicated to the site nodes (i.e. primary nodes) and species nodes (i.e.
 feature nodes) using the arguments \code{site_col} and \code{species_col}.
 The type of nodes returned in the output can be chosen with the argument
-\code{return_node_type} equal to \code{"both"} to keep both types of nodes,
-\code{"sites"} to preserve only the sites nodes and \code{"species"} to
+\code{return_node_type} equal to \code{both} to keep both types of nodes,
+\code{sites} to preserve only the sites nodes and \code{species} to
 preserve only the species nodes.
 }
 \examples{

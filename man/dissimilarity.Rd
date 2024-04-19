@@ -11,18 +11,18 @@ dissimilarity(comat, metric = "Simpson", formula = NULL, method = "prodmat")
 \item{comat}{a co-occurrence \code{matrix} with sites as rows and species
 as columns.}
 
-\item{metric}{a vector of string(s) indicating which metrics to chose
+\item{metric}{a \code{character} vector indicating which metrics to chose
 (see Details). Available options are \emph{abc}, \emph{ABC}, \emph{Jaccard},
 \emph{Jaccardturn}, \emph{Sorensen}, \emph{Simpson},  \emph{Bray},
 \emph{Brayturn} or \emph{Euclidean}.\cr
 If \code{"all"} is specified, then all metrics will be
 calculated. Can be set to \code{NULL} if \code{formula} is used.}
 
-\item{formula}{a vector of string(s) with your own formula based on the
+\item{formula}{a \code{character} vector with your own formula(s) based on the
 \code{a}, \code{b}, \code{c}, \code{A}, \code{B}, and \code{C} quantities
 (see Details). \code{formula} is set to \code{NULL} by default.}
 
-\item{method}{a string indicating what method should be used to compute
+\item{method}{a \code{character} indicating what method should be used to compute
 \code{abc} (see Details).
 \code{method = "prodmat"} by default is more efficient but can be greedy
 in memory and \code{method="loops"} is less efficient but less greedy in
@@ -67,10 +67,11 @@ sites. B and C are the total number of specimens counted at both sites minus
 A.
 
 \code{formula} can be used to compute customized metrics with the terms
-\code{a}, \code{b}, \code{c}, \code{A}, \code{B}, and \code{C}.
-For example
-\code{formula = c("(b + c) / (a + b + c)", "(B + C) / (2*A + B + C)")} will
-compute the Jaccard and Bray-Curtis dissimilarity metrics, respectively.
+\code{a}, \code{b}, \code{c}, \code{A}, \code{B}, and \code{C}. For example
+\code{formula = c("pmin(b,c) / (a + pmin(b,c))", "(B + C) / (2*A + B + C)")}
+will compute the Simpson and Bray-Curtis dissimilarity metrics, respectively.
+\strong{Note that pmin is used in the Simpson formula because a, b, c, A, B and C
+are \code{numeric} vectors.}
 
 Euclidean computes the Euclidean distance between each pair of sites.
 }

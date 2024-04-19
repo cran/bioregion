@@ -1,14 +1,14 @@
 #' Convert similarity metrics to dissimilarity metrics
 #'
-#' This function converts a data.frame of similarity metrics between sites to
+#' This function converts a `data.frame` of similarity metrics between sites to
 #'  dissimilarity metrics (beta diversity).
 #'
 #' @param similarity the output object from [similarity()] or
 #' [dissimilarity_to_similarity()].
 #' 
-#' @param include_formula a boolean indicating if the metrics based on your own
-#' formula should be converted (see Details). This argument is set to `TRUE`
-#' by default.
+#' @param include_formula a `boolean` indicating if the metrics based on your 
+#' own formula(s) should be converted (see Details). This argument is set to 
+#' `TRUE` by default.
 #' 
 #' @note
 #' \loadmathjax
@@ -71,9 +71,8 @@ similarity_to_dissimilarity <- function(similarity, include_formula = TRUE){
   output <- similarity
   
   # Controls
-  controls(args = NULL, data = output, type = "input_conversion_similarity")
   controls(args = include_formula, data = NULL, type = "boolean")
-  controls(args = NULL, data = output, type = "input_conversion")
+  controls(args = NULL, data = similarity, type = "input_conversion_similarity")
   
   # Overwrite attribute
   attr(output, "type") <- "dissimilarity"
@@ -91,14 +90,14 @@ similarity_to_dissimilarity <- function(similarity, include_formula = TRUE){
   # Not Euclidean
   posnoteucl <- which(metrics %in% noteucl)
   if(length(posnoteucl) > 0){
-    output[,(posnoteucl + 2)] = 1- output[,(posnoteucl + 2)]  
+    output[,(posnoteucl + 2)] =  1- output[,(posnoteucl + 2)]  
   }
   
   # Include formula ?
   if(include_formula){
     posnotall <- which(!(metrics %in% all))
     if(length(posnotall) > 0){
-      output[,(posnotall + 2)] = 1- output[,(posnotall + 2)]  
+      output[,(posnotall + 2)] = 1 - output[,(posnotall + 2)]  
     }
   }
 
@@ -108,15 +107,15 @@ similarity_to_dissimilarity <- function(similarity, include_formula = TRUE){
 
 #' Convert dissimilarity metrics to similarity metrics
 #'
-#' This function converts a data.frame of dissimilarity metrics (beta diversity)
+#' This function converts a `data.frame` of dissimilarity metrics (beta diversity)
 #' between sites to similarity metrics.
 #'
 #' @param dissimilarity the output object from [dissimilarity()] or
 #' [similarity_to_dissimilarity()].
 #' 
-#' @param include_formula a boolean indicating if the metrics based on your own
-#' formula should be converted (see Details). This argument is set to `TRUE`
-#' by default.
+#' @param include_formula a `boolean` indicating if the metrics based on your 
+#' own formula(s) should be converted (see Details). This argument is set to 
+#' `TRUE` by default.
 #' 
 #' @note
 #' \loadmathjax
@@ -180,9 +179,8 @@ dissimilarity_to_similarity <- function(dissimilarity, include_formula = TRUE){
   output <- dissimilarity
   
   # Controls
-  controls(args = NULL, data = output, type = "input_conversion_dissimilarity")
   controls(args = include_formula, data = NULL, type = "boolean")
-  controls(args = NULL, data = output, type = "input_conversion")
+  controls(args = NULL, data = dissimilarity, type = "input_conversion_dissimilarity")
   
   # Overwrite attribute
   attr(output, "type") <- "similarity"

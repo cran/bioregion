@@ -7,14 +7,14 @@
 #' @param comat a co-occurrence `matrix` with sites as rows and species as
 #' columns.
 #' 
-#' @param metric a vector of string(s) indicating which metrics to chose
+#' @param metric a `character` vector indicating which metrics to chose
 #' (see Details). Available options are *abc*, *ABC*, *Jaccard*,
 #' *Jaccardturn*, *Sorensen*, *Simpson*,  *Bray*,
 #' *Brayturn* or *Euclidean*.\cr
 #' If `"all"` is specified, then all metrics will be
 #' calculated. Can be set to `NULL` if `formula` is used.
 #' 
-#' @param formula a vector of string(s) with your own formula based on the
+#' @param formula a `character` vector with your own formula(s) based on the
 #' `a`, `b`, `c`, `A`, `B`, and `C` quantities
 #' (see Details). `formula` is set to `NULL` by default.
 #' 
@@ -51,8 +51,10 @@
 #'
 #' `formula` can be used to compute customized metrics with the terms
 #' `a`, `b`, `c`, `A`, `B`, and `C`. For example
-#' `formula = c("1 - (b + c) / (a + b + c)", "1 - (B + C) / (2*A + B + C)")`
-#' will compute the Jaccard and Bray-Curtis similarity metrics, respectively.
+#' `formula = c("1 - pmin(b,c) / (a + pmin(b,c))", "1 - (B + C) / (2*A + B + C)")`
+#' will compute the Simpson and Bray-Curtis similarity metrics, respectively. 
+#' **Note that pmin is used in the Simpson formula because a, b, c, A, B and C 
+#' are `numeric` vectors.**
 #'
 #' Euclidean computes the Euclidean similarity between each pair of site
 #' following this equation:
@@ -95,70 +97,71 @@
 #' \insertRef{Baselga2013}{bioregion}
 #' 
 #' @export
-similarity <- function(comat, metric = "Simpson", formula = NULL,
+similarity <- function(comat, 
+                       metric = "Simpson", 
+                       formula = NULL,
                        method = "prodmat"){
   
-  # list of metrics based on abc
+  # List of metrics based on abc
   lsmetricabc <- c("abc", "Jaccard", "Jaccardturn", "Sorensen", "Simpson")
   
-  # list of metrics based on ABC
+  # List of metrics based on ABC
   lsmetricABC <- c("ABC", "Bray", "Brayturn")
   
-  # list of metrics based on other features
+  # List of metrics based on other features
   lsmetrico <- c("Euclidean")
   
-  if ("all" %in% metric) {
-    metric <- c(lsmetricabc, lsmetricABC, lsmetrico)
+  # Control inputs
+  controls(args = method, data = NULL, type = "character")
+  if (!(method %in% c("prodmat", "loops"))) {
+    stop("The method is not available.
+     Please chose among the followings:
+         prodmat or loops.", call. = FALSE)
   }
   
-  # Controls
   if (is.null(metric) & is.null(formula)) {
-    stop("metric or formula should be used", call. = FALSE)
+    stop("metric or formula should be used.", call. = FALSE)
   }
   
-  if (length(intersect(c(lsmetricabc, lsmetricABC, lsmetrico), metric)) !=
-      length(metric) & is.null(formula)) {
-    stop("One or several similarity metric(s) chosen is not available.
+  if(!is.null(metric)){
+    controls(args = metric, data = NULL, type = "character_vector")
+    if ("all" %in% metric) {
+      metric <- c(lsmetricabc, lsmetricABC, lsmetrico)
+    }
+    if (length(intersect(c(lsmetricabc, lsmetricABC, lsmetrico), metric)) !=
+        length(metric)) {
+      stop("One or several metric(s) chosen is not available.
      Please chose among the followings:
          abc, Jaccard, Jaccardturn, Sorensen, Simpson, ABC, Bray, Brayturn or
          Euclidean.", call. = FALSE)
+    }
   }
-  
-  if (!is.null(formula) & !is.character(formula)) {
-    stop("formula should be a vector of characters if not NULL", call. = FALSE)
-  } else { # Check if abc and ABC in formula
-    abcinformula <- (sum(c(grepl("a", formula), grepl("b", formula),
-                           grepl("c", formula))) > 0)
-    ABCinformula <- (sum(c(grepl("A", formula), grepl("B", formula),
-                           grepl("C", formula))) > 0)
+
+  if(!is.null(formula)){
+    controls(args = formula, data = NULL, type = "character_vector")
   }
+  abcinformula <- (sum(c(grepl("a", formula), grepl("b", formula),
+                         grepl("c", formula))) > 0)
+  ABCinformula <- (sum(c(grepl("A", formula), grepl("B", formula),
+                         grepl("C", formula))) > 0)  
   
-  if (!is.matrix(comat)) {
-    stop("Co-occurrence matrix should be a matrix", call. = FALSE)
-  }
-  
-  sco <- sum(is.na(comat))
+  controls(args = NULL, data = comat, type = "input_matrix")
   minco <- min(comat)
-  if (sco > 0) {
-    stop("Co-occurrence matrix should contains only positive real: NA(s)
-         detected!", call. = FALSE)
-  }
   if (minco < 0) {
     if("Euclidean" %in% metric){
-      message("Negative value(s) detected in the co-occurence matrix!")
+      message("Negative value(s) detected in comat!")
     }else{
-      stop("Co-occurrence matrix should contains only positive real: negative
+      stop("comat should contains only positive real: negative
          value detected!", call. = FALSE)
     }
   }
   
-  if (!(method %in% c("prodmat", "loops"))) {
-    stop("The method is not available.
-     Please chose among the followings: prodmat, loops", call. = FALSE)
-  }
-  
   # Extract site id
   siteid <- rownames(comat)
+  if(is.null(siteid)){
+    siteid <- as.character(1:dim(comat)[1])
+    message("No rownames detected, they have been assigned automatically.")
+  }
   
   # Initialize output
   res <- NULL
@@ -258,14 +261,6 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
     }
   }
   
-  # Compute equation in formula
-  if (!is.null(formula)) {
-    for (k in 1:length(formula)) {
-      res <- cbind(res, eval(parse(text = formula[k])))
-      colnames(res)[dim(res)[2]] <- formula[k]
-    }
-  }
-  
   # Compute Euclidean similarity between site using dist()
   if ("Euclidean" %in% metric) {
     eucl <- as.matrix(stats::dist(comat))
@@ -296,6 +291,14 @@ similarity <- function(comat, metric = "Simpson", formula = NULL,
     res$A <- abca$A
     res$B <- abca$B
     res$C <- abca$C
+  }
+  
+  # Compute equation in formula
+  if (!is.null(formula)) {
+    for (k in 1:length(formula)) {
+      res <- cbind(res, eval(parse(text = formula[k])))
+      colnames(res)[dim(res)[2]] <- formula[k]
+    }
   }
 
   # Create output class
