@@ -1,6 +1,6 @@
-6939aadf8825a1993e00775ebeb8dd50 *DESCRIPTION
+0ee0fd3936a6c4b3e37769bd33e262e9 *DESCRIPTION
 d42b207d5d94186d3c696e9b4595240c *NAMESPACE
-0f964c8e0a42ce6626a75645cd4ef7f8 *NEWS.md
+5d5c403e1fa1c1d196590abd2dbca429 *NEWS.md
 125d60416736e263afb00c1179675a45 *R/RcppExports.R
 8cfac17d2308f046fccadae6c7f36e94 *R/compare_partitions.R
 c78a1e9358f85d76ea5e310582d3b309 *R/cut_tree.R
@@ -12,7 +12,7 @@ c78a1e9358f85d76ea5e310582d3b309 *R/cut_tree.R
 b586eac76c5089160c93223552b460c1 *R/hclu_diana.R
 9db1acce6c012b165a67d3883dddbca3 *R/hclu_hierarclust.R
 f50e311770cdc8b525c813041642b9c4 *R/hclu_optics.R
-19c33f9e4d870a9e26ce74b7de2c7f9f *R/install_binaries.R
+01466eed31aa332ebdd47ecc6883e79a *R/install_binaries.R
 37afed829bba37addef4015b21227802 *R/map_clusters.R
 1f5854e3e758e5b5a6af0bfaa7504516 *R/mat_to_net.R
 26b05c09fd862e05e7a9cc93ce928729 *R/net_to_mat.R
@@ -37,10 +37,9 @@ f38e0df2749195e1ab61eba3f2f43059 *R/similarity.R
 d70ccca85c6bee06cc7d4768387aa6ca *R/subset_node.R
 42bfa419668b25e0fde0e0491bbe7fdf *R/utils.R
 1ac09c52abd2571a75c513424314a0b3 *README.md
-45a69695e87ed1d1d7945ffe444278a1 *build/bioregion.pdf
-fe8e073df310d071f9cfaf5f91999049 *build/partial.rdb
-5db44359dc304a8e775cf2c1e0a84a3a *build/stage23.rdb
-13782c0171f8e39379a2c5b34602eaac *build/vignette.rds
+baea31e7ec2a8c6afa3a3de59f3e0a30 *build/partial.rdb
+b554a26015c3e05cac6ac5be010f2950 *build/stage23.rdb
+031d6566f2df6cb67c16881bcc90be25 *build/vignette.rds
 3eda54f15616e0a6a91d0c60af2b9c8b *data/fishdf.rda
 75c1d6d77a7e70bd32775709f1f0ad5f *data/fishmat.rda
 b4e4ffd4fed8ef299923156fac081b7f *data/fishsf.rda
@@ -50,7 +49,7 @@ e5d0237d07183d2556d7669949be7c63 *data/vegemat.rda
 7872f5cbc49471c9f88157b0446fbf94 *inst/REFERENCES.bib
 7ead72d094e137a9919e60b1141c1ed0 *inst/doc/bioregion.R
 1ff19301d341f84894d42870d29a56b5 *inst/doc/bioregion.Rmd
-7bc220f815a82af810295b2fba7bf045 *inst/doc/bioregion.html
+3283f527e3c71beaa23b6edd6c3d4ac4 *inst/doc/bioregion.html
 1e2dfe4b09f97f5aa10e0b8ffcf1036b *man/compare_partitions.Rd
 1f4105a515eb63c1127d69b8f0517aa6 *man/cut_tree.Rd
 f64dca79614cd75f62dac6528f31d89f *man/dissimilarity.Rd
