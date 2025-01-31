@@ -1,33 +1,34 @@
 #' Create a map of bioregions
 #'
-#' This plot function can be used to visualise bioregions based on a 
-#' bioregion.clusters object combined with a geometry (sf objects). 
+#' This plot function can be used to visualize bioregions based on a 
+#' `bioregion.clusters` object combined with a geometry (`sf` objects). 
 #'
-#' @param clusters an object of class `bioregion.clusters` or a `data.frame`. If
-#' a `data.frame` is used, the first column should represent the sites' ID, and
-#' the next column(s) the clusters.
+#' @param clusters An object of class `bioregion.clusters` or a `data.frame`. 
+#' If a `data.frame` is used, the first column should represent the sites' 
+#' ID, and the subsequent column(s) should represent the clusters.
 #'  
-#' @param geometry a spatial object that can be handled by the `sf` package.
+#' @param geometry A spatial object that can be handled by the `sf` package. 
 #' The first attribute should correspond to the sites' ID (see Details).
 #' 
-#' @param write_clusters a `boolean` indicating if the `clusters` 
-#' should be added in `geometry`.
+#' @param write_clusters A `boolean` indicating if the `clusters` should be 
+#' added to the `geometry`.
 #' 
-#' @param plot a `boolean` indicating if the plot should be drawn.
+#' @param plot A `boolean` indicating if the plot should be drawn.
 #' 
-#' @param ... further arguments to be passed to `sf::plot()`
+#' @param ... Further arguments to be passed to `sf::plot()`.
+#' 
+#' @return One or several maps of bioregions if `plot = TRUE` and the 
+#' geometry with additional clusters' attributes if `write_clusters = TRUE`.
 #' 
 #' @details
-#' The `clusters` and `geometry` site IDs should correspond. They should
-#' have the same type (i.e. `character` is cluster is a 
-#' `bioregion.clusters` object) and the site of `clusters` should be 
-#' included in the sites of `geometry`. 
-#' @return  One or several maps of bioregions if `plot = TRUE` and the 
-#' geometry with additional clusters' attributes if `write_clusters = TRUE`. 
+#' The `clusters` and `geometry` site IDs should correspond. They should 
+#' have the same type (i.e., `character` if `clusters` is a 
+#' `bioregion.clusters` object) and the sites of `clusters` should be 
+#' included in the sites of `geometry`.
 #' 
 #' @author
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}),
-#' Boris Leroy (\email{leroy.boris@gmail.com}) and
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 #' Pierre Denelle (\email{pierre.denelle@gmail.com})
 #'
 #' @examples
@@ -36,14 +37,17 @@
 #' 
 #' net <- similarity(fishmat, metric = "Simpson")
 #' clu <- netclu_greedy(net)
-#' map <- map_clusters(clu, fishsf, write_clusters = TRUE, plot = FALSE)
+#' map <- map_bioregions(clu, fishsf, write_clusters = TRUE, plot = FALSE)
 #' 
 #' @importFrom sf st_geometry
 #' 
 #' @export
 
-map_clusters <- function(clusters, geometry, write_clusters = FALSE,
-                         plot = TRUE, ...) {
+map_bioregions <- function(clusters, 
+                           geometry, 
+                           write_clusters = FALSE,
+                           plot = TRUE, 
+                           ...) {
 
   controls(args = write_clusters, data = NULL, type = "boolean")
   controls(args = plot, data = NULL, type = "boolean")
@@ -71,7 +75,8 @@ map_clusters <- function(clusters, geometry, write_clusters = FALSE,
     # no NAs
     nbna <- sum(is.na(clusters))
     if (nbna > 0) {
-      stop("NA(s) detected in the data.frame!", call. = FALSE)
+      stop("NA(s) detected in the data.frame!", 
+           call. = FALSE)
     }
     clu <- FALSE
     df <- clusters
@@ -87,7 +92,7 @@ map_clusters <- function(clusters, geometry, write_clusters = FALSE,
   idc <- df[,1]
   idg <- geometry[, 1, drop = TRUE]
   if(length(setdiff(idc, idg)) > 0){
-    stop("The site of clusters should be included in the sites of geometry",
+    stop("The site of clusters should be included in the sites of geometry.",
          call. = FALSE)
   }
   

@@ -8,9 +8,9 @@
 [![R-CMD-check](https://github.com/bioRgeo/bioregion/workflows/R-CMD-check/badge.svg)](https://github.com/bioRgeo/bioregion/actions)
 [![Codecov test
 coverage](https://codecov.io/gh/bioRgeo/bioregion/branch/master/graph/badge.svg)](https://app.codecov.io/gh/bioRgeo/bioregion?branch=master)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/bioregion)](https://cran.r-project.org/package=bioregion)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/bioregion)](https://cran.r-project.org/package=bioregion)
 [![rstudio mirror
-downloads](http://cranlogs.r-pkg.org/badges/bioregion)](https://r-pkg.org:443/pkg/bioregion)
+downloads](https://cranlogs.r-pkg.org/badges/bioregion)](https://r-pkg.org:443/pkg/bioregion)
 [![DOI](https://zenodo.org/badge/612244739.svg)](https://zenodo.org/doi/10.5281/zenodo.10843109)
 <!-- badges: end -->
 
@@ -61,7 +61,9 @@ package**. Vignettes available are the following ones: <br>
 - **[5.1
   Visualization](https://bioRgeo.github.io/bioregion/articles/a5_1_visualization.html)**
 - **[5.2 Compare
-  partitions](https://bioRgeo.github.io/bioregion/articles/a5_2_compare_partitions.html)**
+  bioregionalizations](https://bioRgeo.github.io/bioregion/articles/a5_2_compare_bioregionalizations.html)**
+- **[5.3 Summary
+  metrics](https://bioRgeo.github.io/bioregion/articles/a5_3_summary_metrics.html)**
 
 Alternatively, if you prefer to view the vignettes in R, you can install
 the package with `build_vignettes = TRUE`. But be aware that some
@@ -69,7 +71,8 @@ vignettes can be slow to generate.
 
 ``` r
 remotes::install_github("bioRgeo/bioregion",
-                        dependencies = TRUE, upgrade = "ask", 
+                        dependencies = TRUE, 
+                        upgrade = "ask", 
                         build_vignettes = TRUE)
 
 vignette("bioregion")
@@ -88,7 +91,8 @@ try to get to it as soon as we can!
 
 ## References and dependencies
 
-`bioregion` depends on `ape`, `bipartite`, `cluster`, `data.table`,
-`dbscan`, `dynamicTreeCut`, `earth`, `fastcluster`, `ggplot2`,
-`grDevices`, `igraph`, `mathjaxr`, `Matrix`, `Rcpp`, `Rdpack`, `rlang`,
-`rmarkdown`, `segmented`,`sf`, `stats`, `tidyr` and `utils`.
+`bioregion` depends on `ape`, `apcluster`, `bipartite`, `cluster`,
+`data.table`, `dbscan`, `dynamicTreeCut`, `earth`, `fastcluster`,
+`ggplot2`, `grDevices`, `httr`, `igraph`, `mathjaxr`, `Matrix`,
+`phangorn`, `Rdpack`, `rlang`, `rmarkdown`, `segmented`,`sf`, `stats`,
+`tidyr` and `utils`.

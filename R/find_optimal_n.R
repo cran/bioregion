@@ -1,172 +1,107 @@
-#' Search for an optimal number of clusters in a list of partitions 
+#' Search for an optimal number of clusters in a list of bioregionalizations 
 #'
-#' This function aims at optimizing one or several criteria on a set of 
-#' ordered partitions. It is usually applied to find one (or several) optimal
-#' number(s) of clusters on, for example, a hierarchical tree to cut, or a 
-#' range of partitions obtained from k-means or PAM. Users are advised to be 
-#' careful if applied in other cases (e.g., partitions which are not ordered in 
-#' an increasing or decreasing sequence, or partitions which are not related
-#' to each other).
+#' This function aims to optimize one or several criteria on a set of 
+#' ordered bioregionalizations. It is typically used to find one or more optimal 
+#' cluster counts on hierarchical trees to cut or ranges of bioregionalizations 
+#' from k-means or PAM. Users should exercise caution in other cases 
+#' (e.g., unordered bioregionalizations or unrelated bioregionalizations).
 #' 
-#' @param partitions a `bioregion.partition.metrics` object (output from 
-#' [partition_metrics()] or a `data.frame` with the first two 
-#' columns named "K" (partition name) and "n_clusters" (number of clusters) and
-#' the following columns containing evaluation metrics (numeric values)
+#' @param bioregionalizations A `bioregion.bioregionalization.metrics` object 
+#' (output from 
+#' [bioregionalization_metrics()]) or a `data.frame` with the first two 
+#' columns named `K` (bioregionalization name) and `n_clusters` (number of clusters), 
+#' followed by columns with numeric evaluation metrics.
 #' 
-#' @param metrics_to_use character string or vector of character strings
-#' indicating upon which metric(s) in `partitions` the optimal number of
-#' clusters should be calculated. Defaults to `"all"` which means all 
-#' metrics available in `partitions` will be used
+#' @param metrics_to_use A `character` vector or single string specifying 
+#' metrics in `bioregionalizations` for calculating optimal clusters. Defaults 
+#' to `"all"` (uses all metrics).
 #' 
-#' @param criterion character string indicating the criterion to be used to
-#' identify optimal number(s) of clusters. Available methods currently include
-#' `"elbow"`,
-#' `"increasing_step"`, `"decreasing_step"`, `"cutoff"`, 
-#' `"breakpoints"`, `"min"` or
-#' `"max"`. Default is `"elbow"`. See details.
+#' @param criterion A `character` string specifying the criterion to identify 
+#' optimal clusters. Options include `"elbow"`, `"increasing_step"`, 
+#' `"decreasing_step"`, `"cutoff"`, `"breakpoints"`, `"min"`, or `"max"`. 
+#' Defaults to `"elbow"`. See Details.
 #' 
-#' @param step_quantile if `"increasing_step"` or `"decreasing_step"`,
-#' specify here the quantile
-#' of differences between two consecutive k to be used as the cutoff to
-#' identify the most important steps in `eval_metric`
+#' @param step_quantile For `"increasing_step"` or `"decreasing_step"`, 
+#' specifies the quantile of differences between consecutive bioregionalizations as 
+#' the cutoff to identify significant steps in `eval_metric`.
 #' 
-#' @param step_levels if `"increasing_step"` or `"decreasing_step"`, specify
-#' here the number of largest steps to keep as cutoffs.
+#' @param step_levels For `"increasing_step"` or `"decreasing_step"`, specifies 
+#' the number of largest steps to retain as cutoffs.
 #' 
-#' @param step_round_above a `boolean` indicating if the optimal number of 
-#' clusters should be picked above or below the identified steps. Indeed, each
-#' step will correspond to a sudden increase or decrease between partition X &
-#' partition X+1: should the optimal partition be X+1 
-#' (`step_round_above = TRUE`) or X (`step_round_above = FALSE`? 
-#' Defaults to `TRUE` 
+#' @param step_round_above A `boolean` indicating whether the optimal clusters 
+#' are above (`TRUE`) or below (`FALSE`) identified steps. Defaults to `TRUE`.
 #' 
-#' @param metric_cutoffs if `criterion = "cutoff"`, specify here the cutoffs
-#' of `eval_metric` at which the number of clusters should be extracted
+#' @param metric_cutoffs For `criterion = "cutoff"`, specifies the cutoffs 
+#' of `eval_metric` to extract cluster counts.
 #' 
-#' @param n_breakpoints specify here the number of breakpoints to look for in
-#' the curve. Defaults to 1 
+#' @param n_breakpoints Specifies the number of breakpoints to find in the 
+#' curve. Defaults to 1.
 #' 
-#' @param plot a boolean indicating if a plot of the first `eval_metric`
-#' should be drawn with the identified optimal numbers of cutoffs
+#' @param plot A `boolean` indicating if a plot of the first `eval_metric` 
+#' with identified optimal clusters should be drawn.
+#'
+#' @return
+#' A `list` of class `bioregion.optimal.n` with these elements:
+#' \itemize{
+#' \item{`args`: Input arguments.}
+#' \item{`evaluation_df`: The input evaluation `data.frame`, appended with 
+#' `boolean` columns for optimal cluster counts.}
+#' \item{`optimal_nb_clusters`: A `list` with optimal cluster counts for each 
+#' metric in `"metrics_to_use"`, based on the chosen `criterion`.}
+#' \item{`plot`: The plot (if requested).}}
 #'
 #' @details
-#' \loadmathjax
+#' This function explores evaluation metric ~ cluster relationships, applying 
+#' criteria to find optimal cluster counts.
 #'
-#' This function explores the relationship evaluation metric ~ number of
-#' clusters, and a criterion is applied to search an optimal number of
-#' clusters.
-#'
-#' **Please read the note section about the following criteria.**
-#'
-#' Foreword: 
+#' **Note on criteria:** Several criteria can return multiple optimal cluster 
+#' counts, emphasizing hierarchical or nested bioregionalizations. This 
+#' approach aligns with modern recommendations for biological datasets, as seen 
+#' in Ficetola et al. (2017)'s reanalysis of Holt et al. (2013).
 #' 
-#' Here we implemented a set of criteria commonly found in the literature or
-#' recommended in the bioregionalisation literature. Nevertheless, we also
-#' advocate to move
-#' beyond the "Search one optimal number of clusters" paradigm, and consider
-#' investigating "multiple optimal numbers of clusters". Indeed, using only one
-#' optimal number of clusters may simplify the natural complexity of biological
-#' datasets, and, for example, ignore the often hierarchical / nested nature of
-#' bioregionalisations. Using multiple partitions likely avoids this
-#' oversimplification bias and may convey more information.
-#' See, for example, the reanalysis of Holt et al. (2013)
-#' by \insertCite{Ficetola2017}{bioregion}, where they used deep, intermediate
-#' and shallow cuts. 
-#' 
-#' Following this rationale, several of the criteria implemented here can/will
-#' return multiple "optimal" numbers of clusters, depending on user choices.
-#'
-#' **Criteria to find optimal number(s) of clusters**
+#' **Criteria for optimal clusters:** 
 #' \itemize{
-#' \item{`elbow`:
-#' This method consists in finding one elbow in the evaluation metric curve, as
-#' is commonly done in clustering analyses. The idea is to approximate the
-#' number of clusters at which the evaluation metric no longer increments.It is
-#' based on a fast method finding the maximum distance between the curve and a
-#' straight line linking the minimum and maximum number of points. The code we
-#' use here is based on code written by Esben Eickhardt available here
-#' <https://stackoverflow.com/questions/2018178/finding-the-best-trade-off-point-on-a-curve/42810075#42810075>.
-#' The code has been modified to work on both increasing and decreasing
-#' evaluation metrics.}
-#' \item{`increasing_step` or `decreasing_step`:
-#' This method consists in identifying clusters at the most important changes,
-#' or steps, in the evaluation metric. The objective can be to either look for
-#' largest increases (`increasing_step`) or largest decreases
-#' `decreasing_step`. Steps are calculated based on the pairwise differences
-#' between partitions. Therefore, this is relative to the distribution of
-#' differences in the evaluation metric over the tested partitions. Specify
-#' `step_quantile` as the quantile cutoff above which steps will be selected as
-#' most important (by default, 0.99, i.e. the largest 1\% steps will be
-#' selected).Alternatively, you can also choose to specify the number of top
-#' steps to keep, e.g. to keep the largest three steps, specify
-#' `step_level = 3`. Basically this method will emphasize the most important
-#' changes in the evaluation metric as a first approximation of where important
-#' cuts can be chosen.
+#' \item{`elbow`: Identifies the "elbow" point in the evaluation metric curve, 
+#' where incremental improvements diminish. Based on a method to find the 
+#' maximum distance from a straight line linking curve endpoints.}
+#' \item{`increasing_step` or `decreasing_step`: Highlights significant 
+#' increases or decreases in metrics by analyzing pairwise differences between 
+#' bioregionalizations. Users specify `step_quantile` or `step_levels`.}
+#' \item{`cutoffs`: Derives clusters from specified metric cutoffs, e.g., as in 
+#' Holt et al. (2013). Adjust cutoffs based on spatial scale.}
+#' \item{`breakpoints`: Uses segmented regression to find breakpoints. Requires 
+#' specifying `n_breakpoints`.}
+#' \item{`min` & `max`: Selects clusters at minimum or maximum metric values.}}
 #' 
-#' **Please note that you should choose between `increasing_step` and
-#' `decreasing_step` depending on the nature of your evaluation metrics. For
-#' example, for metrics that are monotonously decreasing (e.g., endemism
-#' metrics `"avg_endemism" & "tot_endemism"`) with the number of clusters
-#' should n_clusters, you should choose `decreasing_step`. On the contrary, for
-#' metrics that are monotonously increasing with the number of clusters (e.g.,
-#' `"pc_distance"`), you should choose `increasing_step`. **
-#' }
-#' \item{`cutoffs`:
-#' This method consists in specifying the cutoff value(s) in the evaluation
-#' metric from which the number(s) of clusters should be derived. This is the
-#' method used by \insertCite{Holt2013}{bioregion}. Note, however, that the
-#' cut-offs suggested by Holt et al. (0.9, 0.95, 0.99, 0.999) may be only
-#' relevant at very large spatial scales, and lower cut-offs should be
-#' considered at finer spatial scales.
-#' }
-#' \item{`breakpoints`:
-#' This method consists in finding break points in the curve using a segmented
-#' regression. Users have to specify the number of expected break points in
-#' `n_breakpoints` (defaults to 1). Note that since this method relies on a 
-#' regression model, it should probably not be applied with a low number of
-#' partitions.}
-#'
-#' \item{`min` & `max`:
-#' Picks the optimal partition(s) respectively at the minimum or maximum value
-#' of the evaluation metric.}
-#' }
-#' @return
-#' a `list` of class `bioregion.optimal.n` with three elements:
-#' \itemize{
-#' \item{`args`: input arguments
-#' }
-#' \item{`evaluation_df`: the input evaluation data.frame appended with
-#' `boolean` columns identifying the optimal numbers of clusters
-#' }
-#' \item{`optimal_nb_clusters`: a list containing the optimal number(s)
-#' of cluster(s) for each metric specified in `"metrics_to_use"`, based on
-#' the chosen `criterion`
-#' }
-#' \item{`plot`: if requested, the plot will be stored in this slot}}
-#' @note Please note that finding the optimal number of clusters is a procedure
+#' @note 
+#' Please note that finding the optimal number of clusters is a procedure
 #' which normally requires decisions from the users, and as such can hardly be
 #' fully automatized. Users are strongly advised to read the references
 #' indicated below to look for guidance on how to choose their optimal
 #' number(s) of clusters. Consider the "optimal" numbers of clusters returned
 #' by this function as first approximation of the best numbers for your 
-#' bioregionalisation.
+#' bioregionalization.
 #' 
 #' @references
-#' \insertRef{Castro-Insua2018}{bioregion}
-#'
-#' \insertRef{Ficetola2017}{bioregion}
-#'
-#' \insertRef{Holt2013}{bioregion}
-#'
-#' \insertRef{Kreft2010}{bioregion}
-#'
-#' \insertRef{Langfelder2008}{bioregion}
+#' Holt BG, Lessard J, Borregaard MK, Fritz SA, Araújo MB, Dimitrov D, Fabre P, 
+#' Graham CH, Graves GR, Jønsson Ka, Nogués-Bravo D, Wang Z, Whittaker RJ, 
+#' Fjeldså J & Rahbek C (2013) An update of Wallace's zoogeographic regions of 
+#' the world. \emph{Science} 339, 74-78.
 #' 
-#' @importFrom rlang .data
+#' Ficetola GF, Mazel F & Thuiller W (2017) Global determinants of 
+#' zoogeographical boundaries. \emph{Nature Ecology & Evolution} 1, 0089.
+#' 
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a4_1_hierarchical_clustering.html#optimaln}.
+#' 
+#' Associated functions: 
+#' [hclu_hierarclust]
 #' 
 #' @author
-#' Boris Leroy (\email{leroy.boris@gmail.com}),
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) and
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
 #' Pierre Denelle (\email{pierre.denelle@gmail.com})
 #' 
 #' @examples
@@ -175,104 +110,98 @@
 #' rownames(comat) <- paste0("Site",1:20)
 #' colnames(comat) <- paste0("Species",1:25)
 #' 
-#' comnet <- mat_to_net(comat)
-#' 
 #' dissim <- dissimilarity(comat, metric = "all")
 #'
 #' # User-defined number of clusters
-#' tree1 <- hclu_hierarclust(dissim,
-#'                           n_clust = 2:15,
-#'                           index = "Simpson")
-#' tree1
+#' tree <- hclu_hierarclust(dissim,
+#'                           optimal_tree_method = "best",
+#'                           n_clust = 5:10)
+#' tree
 #' 
-#' a <- partition_metrics(tree1,
-#'                    dissimilarity = dissim,
-#'                    net = comnet,
-#'                    species_col = "Node2",
-#'                    site_col = "Node1",
-#'                    eval_metric = c("tot_endemism",
-#'                                    "avg_endemism",
-#'                                    "pc_distance",
-#'                                    "anosim"))
+#' a <- bioregionalization_metrics(tree,
+#'                                 dissimilarity = dissim,
+#'                                 species_col = "Node2",
+#'                                 site_col = "Node1",
+#'                                 eval_metric = "anosim")
 #'                                    
-#' find_optimal_n(a)
-#' find_optimal_n(a, criterion = "increasing_step")
-#' find_optimal_n(a, criterion = "decreasing_step")
-#' find_optimal_n(a, criterion = "decreasing_step",
-#'                step_levels = 3) 
-#' find_optimal_n(a, criterion = "decreasing_step",
-#'                step_quantile = .9) 
-#' find_optimal_n(a, criterion = "decreasing_step",
-#'                step_levels = 3) 
-#' find_optimal_n(a, criterion = "decreasing_step",
-#'                step_levels = 3)                 
-#' find_optimal_n(a, criterion = "breakpoints")             
+#' find_optimal_n(a, criterion = 'increasing_step', plot = FALSE)
 #'
 #' @importFrom stats predict quantile
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot aes_string geom_line facet_wrap geom_vline
 #' @importFrom ggplot2 theme_bw
+#' @importFrom rlang .data
 #' 
 #' @export
-
-find_optimal_n <- function(
-    partitions,
-    metrics_to_use = "all",
-    criterion = "elbow", 
-    step_quantile = .99,
-    step_levels = NULL,
-    step_round_above = TRUE,
-    metric_cutoffs = c(.5, .75, .9, .95, .99, .999),
-    n_breakpoints = 1,
-    plot = TRUE){
+find_optimal_n <- function(bioregionalizations,
+                           metrics_to_use = "all",
+                           criterion = "elbow", 
+                           step_quantile = .99,
+                           step_levels = NULL,
+                           step_round_above = TRUE,
+                           metric_cutoffs = c(.5, .75, .9, .95, .99, .999),
+                           n_breakpoints = 1,
+                           plot = TRUE){
   
-  if(!inherits(partitions, "bioregion.partition.metrics")){
-    if(!inherits(partitions, "data.frame")){
-      stop("partitions should be the output object from partition_metrics()",
-           "or a data.frame")
+  if(!inherits(bioregionalizations, "bioregion.bioregionalization.metrics")){
+    if(!inherits(bioregionalizations, "data.frame")){
+      stop(paste0("bioregionalizations should be the output object from ", 
+                  "bioregionalization_metrics() ",
+                  "or a data.frame"), 
+           call. = FALSE) 
     } else {
-      if(all(colnames(partitions)[1:2] == c("K", "n_clusters")) &
-         ncol(partitions) > 2) {
-        if(all(sapply(partitions[, 3:ncol(partitions)],
+      if(all(colnames(bioregionalizations)[1:2] == c("K", "n_clusters")) &
+         ncol(bioregionalizations) > 2) {
+        if(all(sapply(bioregionalizations[, 3:ncol(bioregionalizations)],
                       is.numeric))) {
-          partitions <- list(
-            args = list(eval_metric =
-                          colnames(partitions)[3: ncol(partitions)]),
-            evaluation_df = partitions)
+          bioregionalizations <- list(
+            args = list(eval_metric = colnames(bioregionalizations)[3: ncol(bioregionalizations)]),
+                        evaluation_df = bioregionalizations)
         } else {
-          stop("Your partition data.frame contains non numeric columns. ", 
-               "Only numeric columns are expected after the first two columns")
+          stop(paste0("Your bioregionalization data.frame contains non numeric ",
+                      "columns. Only numeric columns are expected after the ",
+                      "first two columns"), 
+               call. = FALSE) 
         }
         
       } else {
-        stop(
-          "partitions should be the output object from partition_metrics() ",
-          "or a data.frame with the first two columns named as 'K' & ",
-          "'n_clusters' and the following columns being the evaluation ",
-          "metrics")
+        stop(paste0("bioregionalizations should be the output object from ",
+                    "bioregionalization_metrics() ",
+                    "or a data.frame with the first two columns named as ",
+                    "'K' & 'n_clusters' and the following columns being the ",
+                    "evaluation metrics"), 
+             call. = FALSE) 
+        
       }
     }
   }
   
-  if(length(criterion) > 1) {
-    stop("Please choose only one criterion")
+  controls(args = metrics_to_use, data = NULL, type = "character_vector")
+  if("all" %in% metrics_to_use) {
+    metrics_to_use <- bioregionalizations$args$eval_metric
+  } else if(any(!(metrics_to_use %in% colnames(bioregionalizations$evaluation_df)))) {
+    stop(paste0("metrics_to_use should exist in the evaluation table."),
+         call. = FALSE)
   }
   
-  if("all" %in% metrics_to_use) {
-    metrics_to_use <- partitions$args$eval_metric
-  } else if(any(!(metrics_to_use %in% colnames(partitions$evaluation_df)))) {
-    stop("metrics_to_use should exist in the evaluation table")
+  controls(args = criterion, data = NULL, type = "character")
+  if (!(criterion %in% c("elbow", "increasing_step", "decreasing_step", 
+                                "cutoff", "breakpoints", "min", "max"))) {
+    stop(paste0("Please choose criterion from the following:\n",
+                "elbow, increasing_step, decreasing_step, cutoff, breakpoints,",
+                " min or max"), 
+         call. = FALSE)   
   }
   
   # Verifying that metrics vary, otherwise we remove them
-  nvals_metrics <- sapply(lapply(partitions$evaluation_df[, metrics_to_use,
+  nvals_metrics <- sapply(lapply(bioregionalizations$evaluation_df[, metrics_to_use,
                                                           drop = FALSE],
                                unique), length)
   if (any(nvals_metrics == 1)) {
     exclude_metrics <- names(nvals_metrics[which(nvals_metrics == 1)])
     warning(paste0("Metrics ", 
                    paste0(exclude_metrics, collapse = ", "),
-                   " did not vary in partitions, so they were removed."))
+                   " did not vary in bioregionalizations, so they were removed."))
     metrics_to_use <- metrics_to_use[-which(metrics_to_use %in% 
                                               exclude_metrics)]
   } 
@@ -287,66 +216,65 @@ find_optimal_n <- function(
                                               exclude_metrics)]
   }
   if(!(length(metrics_to_use))) {
-    stop("The selected partition metrics did not vary sufficiently in input. ",
-         "Please check your partition metrics or increase your ",
-         "range of partitions when computing partition_metrics()")
+    stop(paste0("The selected bioregionalization metrics did not vary sufficiently ",
+                "in input. Please check your bioregionalization metrics or increase ",
+                "your range of bioregionalizations when computing ",
+                "bioregionalization_metrics()"), 
+         call. = FALSE)
   }
   
-  print(metrics_to_use)
-  if(nrow(partitions$evaluation_df) <= 4){
-    stop("The number of partitions is too low (<=4) for this function to work
-         properly")
+  #print(metrics_to_use)
+  
+  if(nrow(bioregionalizations$evaluation_df) <= 4){
+    stop(paste0("The number of bioregionalizations is too low (<=4) ",
+                "for this function to work properly"),
+         call. = FALSE) 
+         
   } else{
-    message(paste0("Number of partitions: ",
-                   nrow(partitions$evaluation_df), "\n"))
+    message(paste0("Number of bioregionalizations: ",
+                   nrow(bioregionalizations$evaluation_df), "\n"))
     
     if(criterion %in% c("elbow", "increasing_step", "decreasing_step",
                         "breakpoints")) {
-      if(nrow(partitions$evaluation_df) <= 8) {
-        message(paste0(
-          "...Caveat: be cautious with the interpretation of metric analyses
-          with such a low number of partitions"))
+      if(nrow(bioregionalizations$evaluation_df) <= 8) {
+        message(paste0("...Caveat: be cautious with the interpretation of ",
+                       "metric analyses with such a low number of bioregionalizations"))
       }
-    } else if(!(criterion %in% c("min", "max", "cutoff"))) {
-      stop("criterion must be one of elbow, increasing_step, decreasing_step,
-           min, max, cutoff or breakpoints")
-    }
+    } 
+    #else if(!(criterion %in% c("min", "max", "cutoff"))) {
+    #  stop("criterion must be one of elbow, increasing_step, decreasing_step,
+    #       min, max, cutoff or breakpoints")
+    #}
     
     if(criterion %in% c("increasing_step", "decreasing_step")){
-      if(!is.numeric(step_quantile) || step_quantile <= 0 ||
-         step_quantile >= 1){
-        stop(
-          "step_quantile must be a numeric in the ]0,1[ interval. See help of
-           the function.")
-      }
-    }
-    
-    if(criterion %in% c("increasing_step", "decreasing_step")){
-      if(!is.logical(step_round_above)){
-        stop("step_round_above must be a boolean. See help of the function.")
+      controls(args=step_quantile, type="strict_positive_numeric")
+      if(step_quantile >= 1){
+        stop(paste0("step_quantile must be in the ]0,1[ interval."), 
+                    call. = FALSE)
       }
     }
     
     if(criterion %in% c("increasing_step", "decreasing_step")){
-      if(!is.null(step_levels) && (!is.numeric(step_levels) ||
-                                   step_levels < 0)){
-        stop("step_levels must be a positive integer. See help of the
-             function.")
+      controls(args=step_round_above, type="boolean")
+    }
+    
+    if(criterion %in% c("increasing_step", "decreasing_step")){
+      if(!is.null(step_levels)){
+        controls(args = step_levels, type = "positive_integer") 
       }
     }
     
-    if(!is.logical(plot)){
-      stop("plot should be a Boolean.")
-    }
+    controls(args = plot, type = "boolean")
     
-    message(paste0(
-      "Searching for potential optimal number(s) of clusters based on the ",
-      criterion, " method"))
+    message(paste0("Searching for potential optimal number(s) of clusters ",
+                   "based on the ",
+                   criterion, 
+                   " method"))
     
-    partitions$evaluation_df <- data.frame(
-      partitions$evaluation_df,
+    bioregionalizations$evaluation_df <- data.frame(
+      bioregionalizations$evaluation_df,
       array(FALSE,
-            dim = c(nrow(partitions$evaluation_df),
+            dim = c(nrow(bioregionalizations$evaluation_df),
                     length(metrics_to_use)),
             dimnames = list(NULL,
                             paste0("optimal_n_", metrics_to_use))))
@@ -391,26 +319,26 @@ find_optimal_n <- function(
           
           return(list(optim_cutoffs,
                       preds))
-        }, eval_df = partitions$evaluation_df, n_breaks = n_breakpoints)
+        }, eval_df = bioregionalizations$evaluation_df, n_breaks = n_breakpoints)
       
       
       optim_n <- lapply(seg_res, function(x) x[[1]])
       names(optim_n) <- metrics_to_use
       
-      #Rounding to get the closest partition
+      #Rounding to get the closest bioregionalization
       optim_n <- lapply(optim_n, round)
-      if(any(!(na.omit(unlist(optim_n)) %in% partitions$evaluation_df$n_clusters))) {
-        message("Exact break point not in the list of partitions: finding the",
-                " closest partition...\n")
+      if(any(!(na.omit(unlist(optim_n)) %in% bioregionalizations$evaluation_df$n_clusters))) {
+        message("Exact break point not in the list of bioregionalizations: finding the",
+                " closest bioregionalization...\n")
         for(m in names(optim_n)) {
-          if(any(!(optim_n[[m]] %in% partitions$evaluation_df$n_clusters))) {
+          if(any(!(optim_n[[m]] %in% bioregionalizations$evaluation_df$n_clusters))) {
             for(cutoff in  optim_n[[m]][
               which(!(optim_n[[m]] %in% 
-                      partitions$evaluation_df$n_clusters))]) {
+                      bioregionalizations$evaluation_df$n_clusters))]) {
               optim_n[[m]][which(optim_n[[m]] == cutoff)] <- 
-                partitions$evaluation_df$n_clusters[
+                bioregionalizations$evaluation_df$n_clusters[
                   which.min(abs(
-                    partitions$evaluation_df$n_clusters - 
+                    bioregionalizations$evaluation_df$n_clusters - 
                       cutoff
                   ))
                 ]
@@ -424,7 +352,7 @@ find_optimal_n <- function(
                                                            function(x) x[[2]])))
    
       for(metric in names(optim_n)) {
-        partitions$evaluation_df[which(partitions$evaluation_df$n_clusters %in%
+        bioregionalizations$evaluation_df[which(bioregionalizations$evaluation_df$n_clusters %in%
                                          optim_n[[metric]]),
                                  paste0("optimal_n_", metric)] <- TRUE
       }
@@ -436,11 +364,11 @@ find_optimal_n <- function(
                           .elbow_finder(eval_df$n_clusters,
                                         eval_df[, x],
                                         correct_decrease = TRUE)[1]
-                        }, eval_df = partitions$evaluation_df)
+                        }, eval_df = bioregionalizations$evaluation_df)
       names(optim_n) <- metrics_to_use
       
       for(metric in names(optim_n)) {
-        partitions$evaluation_df[which(partitions$evaluation_df$n_clusters == 
+        bioregionalizations$evaluation_df[which(bioregionalizations$evaluation_df$n_clusters == 
                                          optim_n[[metric]]), 
                                  paste0("optimal_n_", metric)] <- TRUE
       }
@@ -504,18 +432,18 @@ find_optimal_n <- function(
             optim_n <- which(diffs > qt) + cl
           }
           return(optim_n)
-        }, eval_df = partitions$evaluation_df, crit = criterion,
+        }, eval_df = bioregionalizations$evaluation_df, crit = criterion,
         s_lvl = step_levels, s_qt = step_quantile, cl = step_round_above)
       
       names(optim_index) <- metrics_to_use
       
       optim_n <- lapply(
         optim_index,
-        function(x) unique(partitions$evaluation_df$n_clusters[x]))
+        function(x) unique(bioregionalizations$evaluation_df$n_clusters[x]))
       
       
       for(metric in names(optim_n)) {
-        partitions$evaluation_df[optim_index[[metric]],
+        bioregionalizations$evaluation_df[optim_index[[metric]],
                                  paste0("optimal_n_", metric)] <- TRUE
       }
       
@@ -524,24 +452,25 @@ find_optimal_n <- function(
       message(" - Cutoff method")
       
       if(length(metrics_to_use) > 1) {
-        stop("Criterion 'cutoff' should probably be used with only one ",
+        stop(paste0("Criterion 'cutoff' should probably be used with only one ",
              "evaluation metric (you have ",
              length(metrics_to_use),
-             " evaluation metrics in 'partitions'). Indeed, metrics have ",
+             " evaluation metrics in 'bioregionalizations'). Indeed, metrics have ",
              "distinct orders of magnitude, and so the 'metric_cutoffs' you ",
              " chose are likely to be",
-             " appropriate for only one of the metrics, but no the others.")
+             " appropriate for only one of the metrics, but no the others."), 
+             call. = FALSE)
       }
       
       optim_index <- sapply(metric_cutoffs,
                             function(cutoff, vals) which(vals >= cutoff)[1],
-                            vals = partitions$evaluation_df[, metrics_to_use])
+                            vals = bioregionalizations$evaluation_df[, metrics_to_use])
       
-      partitions$evaluation_df[, paste0("optimal_n_", metrics_to_use)] <- FALSE
-      partitions$evaluation_df[optim_index, paste0("optimal_n_", 
+      bioregionalizations$evaluation_df[, paste0("optimal_n_", metrics_to_use)] <- FALSE
+      bioregionalizations$evaluation_df[optim_index, paste0("optimal_n_", 
                                                    metrics_to_use)] <- TRUE
       
-      optim_n <- list(partitions$evaluation_df$n_clusters[optim_index])
+      optim_n <- list(bioregionalizations$evaluation_df$n_clusters[optim_index])
       names(optim_n) <- metrics_to_use
     }
     
@@ -551,15 +480,15 @@ find_optimal_n <- function(
       optim_index <- lapply(metrics_to_use,
                             function(x, eval_df) {
                               which(eval_df[, x] == max(eval_df[, x]))
-                            }, eval_df = partitions$evaluation_df)
+                            }, eval_df = bioregionalizations$evaluation_df)
       names(optim_index) <- metrics_to_use
       
       optim_n <- lapply(
         optim_index,
-        function(x) unique(partitions$evaluation_df$n_clusters[x]))
+        function(x) unique(bioregionalizations$evaluation_df$n_clusters[x]))
       
       for(metric in names(optim_n)) {
-        partitions$evaluation_df[optim_index,
+        bioregionalizations$evaluation_df[optim_index,
                                  paste0("optimal_n_", metric)] <- TRUE
       }
     }
@@ -570,29 +499,29 @@ find_optimal_n <- function(
       optim_index <- lapply(metrics_to_use,
                             function(x, eval_df) {
                               which(eval_df[, x] == min(eval_df[, x]))
-                            }, eval_df = partitions$evaluation_df)
+                            }, eval_df = bioregionalizations$evaluation_df)
       names(optim_index) <- metrics_to_use
       
       optim_n <- lapply(
         optim_index,
-        function(x) unique(partitions$evaluation_df$n_clusters[x]))
+        function(x) unique(bioregionalizations$evaluation_df$n_clusters[x]))
       
       for(metric in names(optim_n)) {
-        partitions$evaluation_df[optim_index, paste0("optimal_n_", metric)] <- 
+        bioregionalizations$evaluation_df[optim_index, paste0("optimal_n_", metric)] <- 
           TRUE
       }
     }
     
     if(plot){
       ggdf2 <- tidyr::pivot_longer(
-        data = as.data.frame(partitions$evaluation_df),
-        cols = grep("optimal_n_", colnames(partitions$evaluation_df)),
+        data = as.data.frame(bioregionalizations$evaluation_df),
+        cols = grep("optimal_n_", colnames(bioregionalizations$evaluation_df)),
         names_to = "variable")
       ggdf2 <- as.data.frame(ggdf2)
       ggdf2$variable <- gsub("optimal_n_", "", ggdf2$variable)
       ggdf2 <- ggdf2[ggdf2$value, ]
       ggdf <- as.data.frame(tidyr::pivot_longer(
-        data = partitions$evaluation_df, cols = metrics_to_use,
+        data = bioregionalizations$evaluation_df, cols = metrics_to_use,
         names_to = "variable"))
       
       message("Plotting results...")
@@ -608,8 +537,8 @@ find_optimal_n <- function(
                                                        y = "value")) +
           ggplot2::geom_line(col = "darkgrey") +
           ggplot2::facet_wrap(~ variable, scales = "free_y") +
-          # ggplot2::geom_hline(yintercept = partitions$evaluation_df[
-          #   partitions$evaluation_df$optimal_nclust, eval_metric[1]],
+          # ggplot2::geom_hline(yintercept = bioregionalizations$evaluation_df[
+          #   bioregionalizations$evaluation_df$optimal_nclust, eval_metric[1]],
           #                     linetype = 2) +
           ggplot2::geom_vline(data = ggdf2,
                               ggplot2::aes_string(xintercept = "n_clusters"),
@@ -622,8 +551,8 @@ find_optimal_n <- function(
                                                        y = "value")) +
           ggplot2::geom_line(col = "darkgrey") +
           ggplot2::facet_wrap(~ variable, scales = "free_y") +
-          # ggplot2::geom_hline(yintercept = partitions$evaluation_df[
-          #   partitions$evaluation_df$optimal_nclust, eval_metric[1]],
+          # ggplot2::geom_hline(yintercept = bioregionalizations$evaluation_df[
+          #   bioregionalizations$evaluation_df$optimal_nclust, eval_metric[1]],
           #                     linetype = 2) +
           ggplot2::geom_vline(data = ggdf2,
                               ggplot2::aes_string(xintercept = "n_clusters"),
@@ -645,7 +574,7 @@ find_optimal_n <- function(
                               n_breakpoints = n_breakpoints,
                               plot = plot
   ),
-  evaluation_df = partitions$evaluation_df,
+  evaluation_df = bioregionalizations$evaluation_df,
   optimal_nb_clusters = optim_n,
   plot = p)
   

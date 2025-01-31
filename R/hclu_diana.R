@@ -1,66 +1,74 @@
 #' Divisive hierarchical clustering based on dissimilarity or beta-diversity
 #'
 #' This function computes a divisive hierarchical clustering from a
-#' dissimilarity (beta-diversity) `data.frame`, calculates the cophenetic correlation
-#' coefficient, and can get clusters from the tree if requested by the user.
-#' The function implements randomization of the dissimilarity matrix to
-#' generate the tree, with a selection method based on the optimal cophenetic
+#' dissimilarity (beta-diversity) `data.frame`, calculates the cophenetic 
+#' correlation coefficient, and can generate clusters from the tree if requested 
+#' by the user. The function implements randomization of the dissimilarity matrix 
+#' to generate the tree, with a selection method based on the optimal cophenetic
 #' correlation coefficient. Typically, the dissimilarity `data.frame` is a
 #' `bioregion.pairwise.metric` object obtained by running `similarity`
-#' or `similarity` and then `similarity_to_dissimilarity`.
+#' or `similarity` followed by `similarity_to_dissimilarity`.
 #'
-#' @param dissimilarity the output object from [dissimilarity()] or
+#' @param dissimilarity The output object from [dissimilarity()] or
 #'  [similarity_to_dissimilarity()], or a `dist` object. 
 #'  If a `data.frame` is used, the first two 
-#' columns represent pairs of sites (or any pair of nodes), and the next
-#' column(s) are the dissimilarity indices.
+#' columns represent pairs of sites (or any pair of nodes), and the remaining
+#' column(s) contain the dissimilarity indices.
 #' 
-#' @param index name or number of the dissimilarity column to use. By default, 
+#' @param index The name or number of the dissimilarity column to use. By default, 
 #' the third column name of `dissimilarity` is used.
 #'  
-#' @param n_clust an `integer` or an `integer` vector indicating the number of
-#' clusters to be obtained from the hierarchical tree, or the output from
-#' [partition_metrics]. Should not be used at the same time as
+#' @param n_clust An `integer` vector or a single `integer` indicating the 
+#' number of clusters to be obtained from the hierarchical tree, or the output 
+#' from [bioregionalization_metrics]. Should not be used concurrently with
 #' `cut_height`.
 #' 
-#' @param cut_height a `numeric` vector indicating the height(s) at which the
-#' tree should be cut. Should not be used at the same time as `n_clust`.
+#' @param cut_height A `numeric` vector indicating the height(s) at which the
+#' tree should be cut. Should not be used concurrently with `n_clust`.
 #' 
-#' @param find_h a `boolean` indicating if the height of cut should be found for
-#' the requested `n_clust`.
+#' @param find_h A `boolean` indicating whether the cutting height should be 
+#' determined for the requested `n_clust`.
 #' 
-#' @param h_max a `numeric` indicating the maximum possible tree height for
-#' the chosen `index`.
-#' 
-#' @param h_min a `numeric` indicating the minimum possible height in the tree
+#' @param h_max A `numeric` value indicating the maximum possible tree height 
 #' for the chosen `index`.
 #' 
-#' @details
-#' The function is based on [diana][cluster::diana].
-#' Chapter 6 of Kaufman and Rousseeuw (1990) fully details the functioning of
-#' the diana algorithm.
-#'
-#' To find an optimal number of clusters, see [partition_metrics()]
-#'
+#' @param h_min A `numeric` value indicating the minimum possible height in the 
+#' tree for the chosen `index`.
+#' 
 #' @return
 #' A `list` of class `bioregion.clusters` with five slots:
 #' \enumerate{
-#' \item{**name**: `character` containing the name of the algorithm}
-#' \item{**args**: `list` of input arguments as provided by the user}
-#' \item{**inputs**: `list` of characteristics of the clustering process}
-#' \item{**algorithm**: `list` of all objects associated with the
-#'  clustering procedure, such as original cluster objects}
-#' \item{**clusters**: `data.frame` containing the clustering results}}
+#' \item{**name**: A `character` string containing the name of the algorithm.}
+#' \item{**args**: A `list` of input arguments as provided by the user.}
+#' \item{**inputs**: A `list` describing the characteristics of the clustering process.}
+#' \item{**algorithm**: A `list` containing all objects associated with the
+#'  clustering procedure, such as the original cluster objects.}
+#' \item{**clusters**: A `data.frame` containing the clustering results.}}
+#' 
+#' @details
+#' The function is based on [diana][cluster::diana].
+#' Chapter 6 of Kaufman & Rousseeuw (1990) fully details the functioning of
+#' the diana algorithm.
+#'
+#' To find an optimal number of clusters, see [bioregionalization_metrics()]
 #'
 #' @references
-#' \insertRef{Kaufman2009}{bioregion}
+#' Kaufman L & Rousseeuw PJ (2009) Finding groups in data: An introduction to 
+#' cluster analysis. In & Sons. JW (ed.), \emph{Finding groups in data: An 
+#' introduction to cluster analysis}.
+#' 
+#' @seealso
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a4_1_hierarchical_clustering.html}.
+#' 
+#' Associated functions: 
+#' [cut_tree]
 #'
 #' @author
-#' Pierre Denelle (\email{pierre.denelle@gmail.com}),
-#' Boris Leroy (\email{leroy.boris@gmail.com}) and
+#' Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 #' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) 
-#' 
-#' @seealso [cut_tree] 
 #' 
 #' @examples
 #' comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
@@ -96,6 +104,10 @@ hclu_diana <- function(dissimilarity,
              type = "input_data_frame_nhandhclu")
     controls(args = index, data = dissimilarity, type = "input_net_index")
     net <- dissimilarity
+    # Convert tibble into dataframe
+    if(inherits(net, "tbl_df")){
+      net <- as.data.frame(net)
+    }
     net[, 3] <- net[, index]
     net <- net[, 1:3]
     controls(args = NULL, data = net, type = "input_net_index_value")
@@ -115,24 +127,25 @@ hclu_diana <- function(dissimilarity,
     if(is.numeric(n_clust)) {
       controls(args = n_clust, data = NULL, 
                type = "strict_positive_integer_vector")
-    } else if(inherits(n_clust, "bioregion.partition.metrics")){
+    } else if(inherits(n_clust, "bioregion.bioregionalization.metrics")){
       if(!is.null(n_clust$algorithm$optimal_nb_clusters)) {
         n_clust <- n_clust$algorithm$optimal_nb_clusters
       } else {
-        stop("n_clust does not have an optimal number of clusters. Did you
-        specify partition_optimisation = TRUE in partition_metrics()?", 
+        stop(paste0("n_clust does not have an optimal number of clusters. ",
+                    "Did you specify partition_optimisation = TRUE in ",
+                    "bioregionalization_metrics()?"), 
              call. = FALSE)
       }
     } else{
       stop("n_clust must be one of those:
         * an integer determining the number of clusters
         * a vector of integers determining the numbers of clusters for each cut
-        * the output from partition_metrics()", 
+        * the output from bioregionalization_metrics()", 
            call. = FALSE)
     }
     if(!is.null(cut_height)){
-      stop("Please provide either n_clust or cut_height, but not both at the
-           same time.", 
+      stop(paste0("Please provide either n_clust or cut_height, ",
+                  "but not both at the same time."), 
            call. = FALSE)
     }
   }
@@ -140,12 +153,14 @@ hclu_diana <- function(dissimilarity,
     controls(args = cut_height, data = NULL, type = "positive_numeric_vector")
   }
   controls(args = find_h, data = NULL, type = "boolean")
-  controls(args = h_min, data = NULL, type = "positive_numeric")
-  controls(args = h_max, data = NULL, type = "positive_numeric")
-  if(h_min > h_max){
-    stop("h_min must be inferior to h_max.")
+  if(find_h){
+    controls(args = h_min, data = NULL, type = "positive_numeric")
+    controls(args = h_max, data = NULL, type = "positive_numeric")
+    if(h_min > h_max){
+      stop("h_min must be inferior to h_max.")
+    }
   }
-  
+
   # 2. Function ---------------------------------------------------------------
   # Output of the function
   outputs <- list(name = "hclu_diana")
@@ -179,20 +194,28 @@ hclu_diana <- function(dissimilarity,
   outputs$algorithm$final.tree <- diana_clust
   # outputs$diana <- diana_clust
   
-  # Cophenetic correlation
-  coph <- as.matrix(stats::cophenetic(outputs$algorithm$final.tree))
-  coph <- coph[match(attr(dist.obj, "Labels"), rownames(coph)),
-               match(attr(dist.obj, "Labels"), colnames(coph))]
-  dist.mat <- as.matrix(dist.obj)
+  # Evaluation
+  # coph <- as.matrix(stats::cophenetic(outputs$algorithm$final.tree))
+  # coph <- coph[match(attr(dist.obj, "Labels"), rownames(coph)),
+  #              match(attr(dist.obj, "Labels"), colnames(coph))]
+  # dist.mat <- as.matrix(dist.obj)
   
-  outputs$algorithm$final.tree.coph.cor <-
-    stats::cor(dist.mat[lower.tri(dist.mat)], coph[lower.tri(coph)],
-               method = "spearman")
+  
+  evals <- tree_eval(outputs$algorithm$final.tree,
+                     dist.obj)
+  
+  outputs$algorithm$final.tree.coph.cor <- evals$cophcor
+  # outputs$algorithm$final.tree.2norm <- evals$norm2
+  outputs$algorithm$final.tree.msd <- evals$msd
+  
+  # outputs$algorithm$final.tree.coph.cor <-
+  #   stats::cor(dist.mat[lower.tri(dist.mat)], coph[lower.tri(coph)],
+  #              method = "spearman")
   
   message(paste0("Output tree has a ",
                  round(outputs$algorithm$final.tree.coph.cor, 2),
-                 " cophenetic correlation coefficient with the initial
-                   dissimilarity matrix\n"))
+                 " cophenetic correlation coefficient with the initial ",
+                 "dissimilarity matrix\n"))
   
   class(outputs) <- append("bioregion.clusters", class(outputs))
   

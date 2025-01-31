@@ -9,108 +9,179 @@ hclu_hierarclust(
   index = names(dissimilarity)[3],
   method = "average",
   randomize = TRUE,
-  n_runs = 30,
+  n_runs = 100,
   keep_trials = FALSE,
-  optimal_tree_method = "best",
+  optimal_tree_method = "iterative_consensus_tree",
   n_clust = NULL,
   cut_height = NULL,
   find_h = TRUE,
   h_max = 1,
-  h_min = 0
+  h_min = 0,
+  consensus_p = 0.5,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{dissimilarity}{the output object from \code{\link[=dissimilarity]{dissimilarity()}} or
+\item{dissimilarity}{The output object from \code{\link[=dissimilarity]{dissimilarity()}} or
 \code{\link[=similarity_to_dissimilarity]{similarity_to_dissimilarity()}}, or a \code{dist} object.
-If a \code{data.frame} is used, the first two
-columns represent pairs of sites (or any pair of nodes), and the next
-column(s) are the dissimilarity indices.}
+If a \code{data.frame} is used, the first two columns represent pairs of sites
+(or any pair of nodes), and the subsequent column(s) contain the
+dissimilarity indices.}
 
-\item{index}{name or number of the dissimilarity column to use. By default,
-the third column name of \code{dissimilarity} is used.}
+\item{index}{The name or number of the dissimilarity column to use. By
+default, the third column name of \code{dissimilarity} is used.}
 
-\item{method}{name of the hierarchical classification method, as in
-\link[fastcluster:hclust]{hclust}. Should be one of "ward.D",
-"ward.D2", "single", "complete", "average"
-(= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or
-"centroid" (= UPGMC).}
+\item{method}{The name of the hierarchical classification method, as in
+\link[fastcluster:hclust]{hclust}. Should be one of \code{"ward.D"},
+\code{"ward.D2"}, \code{"single"}, \code{"complete"}, \code{"average"}
+(= UPGMA), \code{"mcquitty"} (= WPGMA), \code{"median"} (= WPGMC), or
+\code{"centroid"} (= UPGMC).}
 
-\item{randomize}{a \code{boolean} indicating if the dissimilarity matrix should be
-randomized, to account for the order of sites in the dissimilarity matrix.}
+\item{randomize}{A \code{boolean} indicating whether the dissimilarity matrix
+should be randomized to account for the order of sites in the dissimilarity
+matrix.}
 
-\item{n_runs}{number of trials to randomize the dissimilarity matrix.}
+\item{n_runs}{The number of trials for randomizing the dissimilarity matrix.}
 
-\item{keep_trials}{a \code{boolean} indicating if all random trial results.
-should be stored in the output object (set to FALSE to save space if your
-\code{dissimilarity} object is large).}
+\item{keep_trials}{A \code{boolean} indicating whether all random trial results
+should be stored in the output object. Set to \code{FALSE} to save space if your
+\code{dissimilarity} object is large. Note that this cannot be set to \code{TRUE} if
+\code{optimal_tree_method = "iterative_consensus_tree"}.}
 
-\item{optimal_tree_method}{a \code{character} indicating how the final tree
-should be obtained from all trials. The only option currently is
-"best", which means the tree with the best cophenetic correlation
-coefficient will be chosen.}
+\item{optimal_tree_method}{A \code{character} string indicating how the final tree
+should be obtained from all trials. Possible values are
+\code{"iterative_consensus_tree"} (default), \code{"best"}, and \code{"consensus"}.
+\strong{We recommend \code{"iterative_consensus_tree"}. See Details.}}
 
-\item{n_clust}{an \code{integer} or an \code{integer} vector indicating the number of
-clusters to be obtained from the hierarchical tree, or the output from
-\link{partition_metrics}. Should not be used at the same time as
-\code{cut_height}.}
+\item{n_clust}{An \code{integer} vector or a single \code{integer} indicating the
+number of clusters to be obtained from the hierarchical tree, or the output
+from \link{bioregionalization_metrics}. This parameter should not be used
+simultaneously with \code{cut_height}.}
 
-\item{cut_height}{a \code{numeric} vector indicating the height(s) at which the
-tree should be cut. Should not be used at the same time as \code{n_clust}.}
+\item{cut_height}{A \code{numeric} vector indicating the height(s) at which the
+tree should be cut. This parameter should not be used simultaneously with
+\code{n_clust}.}
 
-\item{find_h}{a \code{boolean} indicating if the height of cut should be found for
-the requested \code{n_clust}.}
+\item{find_h}{A \code{boolean} indicating whether the height of the cut should be
+found for the requested \code{n_clust}.}
 
-\item{h_max}{a \code{numeric} indicating the maximum possible tree height for
-the chosen \code{index}.}
-
-\item{h_min}{a \code{numeric} indicating the minimum possible height in the tree
+\item{h_max}{A \code{numeric} value indicating the maximum possible tree height
 for the chosen \code{index}.}
+
+\item{h_min}{A \code{numeric} value indicating the minimum possible height in the
+tree for the chosen \code{index}.}
+
+\item{consensus_p}{A \code{numeric} value (applicable only if
+\code{optimal_tree_method = "consensus"}) indicating the threshold proportion of
+trees that must support a region/cluster for it to be included in the final
+consensus tree.}
+
+\item{verbose}{A \code{boolean} (applicable only if
+\code{optimal_tree_method = "iterative_consensus_tree"}) indicating whether to
+display progress messages. Set to \code{FALSE} to suppress these messages.}
 }
 \value{
 A \code{list} of class \code{bioregion.clusters} with five slots:
 \enumerate{
-\item{\strong{name}: \code{character} containing the name of the algorithm}
-\item{\strong{args}: \code{list} of input arguments as provided by the user}
-\item{\strong{inputs}: \code{list} of characteristics of the clustering process}
-\item{\strong{algorithm}: \code{list} of all objects associated with the
-clustering procedure, such as original cluster objects}
-\item{\strong{clusters}: \code{data.frame} containing the clustering results}}
+\item{\strong{name}: A \code{character} string containing the name of the algorithm.}
+\item{\strong{args}: A \code{list} of input arguments as provided by the user.}
+\item{\strong{inputs}: A \code{list} describing the characteristics of the clustering process.}
+\item{\strong{algorithm}: A \code{list} containing all objects associated with the
+clustering procedure, such as the original cluster objects.}
+\item{\strong{clusters}: A \code{data.frame} containing the clustering results.}}
 
 In the \code{algorithm} slot, users can find the following elements:
 
 \itemize{
-\item{\code{trials}: a list containing all randomization trials. Each trial
-contains the dissimilarity matrix, with site order randomized, the
-associated tree and the cophenetic correlation coefficient (Spearman) for
-that tree}
-\item{\code{final.tree}: a \code{hclust} object containing the final
-hierarchical tree to be used}
-\item{\code{final.tree.coph.cor}: the cophenetic correlation coefficient
-between the initial dissimilarity matrix and \code{final.tree}}
+\item{\code{trials}: A list containing all randomization trials. Each trial
+includes the dissimilarity matrix with randomized site order, the
+associated tree, and the cophenetic correlation coefficient (Spearman) for
+that tree.}
+\item{\code{final.tree}: An \code{hclust} object representing the final
+hierarchical tree to be used.}
+\item{\code{final.tree.coph.cor}: The cophenetic correlation coefficient
+between the initial dissimilarity matrix and the \code{final.tree}.}
 }
 }
 \description{
 This function generates a hierarchical tree from a dissimilarity
 (beta-diversity) \code{data.frame}, calculates the cophenetic correlation
-coefficient, and can get clusters from the tree if requested by the user.
-The function implements randomization of the dissimilarity matrix to
-generate the tree, with a selection method based on the optimal cophenetic
-correlation coefficient. Typically, the dissimilarity \code{data.frame} is a
-\code{bioregion.pairwise.metric} object obtained by running \code{similarity}
-or \code{similarity} and then \code{similarity_to_dissimilarity}.
+coefficient, and optionally retrieves clusters from the tree upon user
+request. The function includes a randomization process for the dissimilarity
+matrix to generate the tree, with two methods available for constructing the
+final tree. Typically, the dissimilarity \code{data.frame} is a
+\code{bioregion.pairwise.metric} object obtained by running \code{similarity},
+or by running \code{similarity} followed by \code{similarity_to_dissimilarity}.
 }
 \details{
 The function is based on \link[fastcluster:hclust]{hclust}.
 The default method for the hierarchical tree is \code{average}, i.e.
 UPGMA as it has been recommended as the best method to generate a tree
-from beta diversity dissimilarity \insertCite{Kreft2010}{bioregion}.
+from beta diversity dissimilarity (Kreft & Jetz, 2010).
 
 Clusters can be obtained by two methods:
 \itemize{
 \item{Specifying a desired number of clusters in \code{n_clust}}
 \item{Specifying one or several heights of cut in \code{cut_height}}}
 
-To find an optimal number of clusters, see \code{\link[=partition_metrics]{partition_metrics()}}
+To find an optimal number of clusters, see \code{\link[=bioregionalization_metrics]{bioregionalization_metrics()}}
+
+It is important to pay attention to the fact that the order of rows
+in the input distance matrix influences the tree topology as explained in
+Dapporto (2013). To address this, the function generates multiple trees by
+randomizing the distance matrix.
+
+Two methods are available to obtain the final tree:
+\itemize{
+
+\item{\code{optimal_tree_method = "iterative_consensus_tree"}: The Iterative
+Hierarchical Consensus Tree (IHCT) method reconstructs a consensus tree by
+iteratively splitting the dataset into two subclusters based on the pairwise
+dissimilarity of sites across \code{n_runs} trees based on \code{n_runs} randomizations
+of the distance matrix. At each iteration, it
+identifies the majority membership of sites into two stable groups across
+all trees,
+calculates the height based on the selected linkage method (\code{method}),
+and enforces monotonic constraints on
+node heights to produce a coherent tree structure.
+This approach provides a robust, hierarchical representation of site
+relationships, balancing
+cluster stability and hierarchical constraints.}
+
+\item{\code{optimal_tree_method = "best"}: This method selects one tree among with
+the highest cophenetic correlation coefficient, representing the best fit
+between the hierarchical structure and the original distance matrix. }
+
+\item{\code{optimal_tree_method = "consensus"}: This method constructs a consensus
+tree using phylogenetic methods with the function
+\link[ape:consensus]{consensus}.
+When using this option, you must set the \code{consensus_p} parameter, which
+indicates
+the proportion of trees that must contain a region/cluster for it to be
+included
+in the final consensus tree.
+Consensus trees lack an inherent height because they represent a majority
+structure rather than an actual hierarchical clustering. To assign heights,
+we use a non-negative least squares method (\link[phangorn:designTree]{nnls.tree})
+based on the initial distance matrix, ensuring that the consensus
+tree preserves
+approximate distances among clusters.}
+}
+
+We recommend using the \code{"iterative_consensus_tree"} as all the branches of
+this tree will always reflect the majority decision among many randomized
+versions of the distance matrix. This method is inspired by
+Dapporto et al. (2015), which also used the majority decision
+among many randomized versions of the distance matrix, but it expands it
+to reconstruct the entire topology of the tree iteratively.
+
+We do not recommend using the basic \code{consensus} method because in many
+contexts it provides inconsistent results, with a meaningless tree topology
+and a very low cophenetic correlation coefficient.
+
+For a fast exploration of the tree, we recommend using the \code{best} method
+which will only select the tree with the highest cophenetic correlation
+coefficient among all randomized versions of the distance matrix.
 }
 \examples{
 comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
@@ -118,10 +189,11 @@ comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
 rownames(comat) <- paste0("Site",1:20)
 colnames(comat) <- paste0("Species",1:25)
 
-dissim <- dissimilarity(comat, metric = "all")
+dissim <- dissimilarity(comat, metric = "Simpson")
 
 # User-defined number of clusters
-tree1 <- hclu_hierarclust(dissim, n_clust = 5)
+tree1 <- hclu_hierarclust(dissim, 
+                          n_clust = 5)
 tree1
 plot(tree1)
 str(tree1)
@@ -129,32 +201,44 @@ tree1$clusters
 
 # User-defined height cut
 # Only one height
-tree2 <- hclu_hierarclust(dissim, cut_height = .05)
+tree2 <- hclu_hierarclust(dissim, 
+                          cut_height = .05)
 tree2
 tree2$clusters
 
 # Multiple heights
-tree3 <- hclu_hierarclust(dissim, cut_height = c(.05, .15, .25))
+tree3 <- hclu_hierarclust(dissim, 
+                          cut_height = c(.05, .15, .25))
 
 tree3$clusters # Mind the order of height cuts: from deep to shallow cuts
 # Info on each partition can be found in table cluster_info
 tree3$cluster_info
 plot(tree3)
 
-# Recut the tree afterwards
-tree3.1 <- cut_tree(tree3, n = 5)
-
-tree4 <- hclu_hierarclust(dissim, n_clust = 1:19)
-
 }
 \references{
-\insertRef{Kreft2010}{bioregion}
+Kreft H & Jetz W (2010) A framework for delineating biogeographical regions
+based on species distributions. \emph{Journal of Biogeography} 37, 2029-2053.
+
+Dapporto L, Ramazzotti M, Fattorini S, Talavera G, Vila R & Dennis, RLH
+(2013) Recluster: an unbiased clustering procedure for beta-diversity
+turnover. \emph{Ecography} 36, 1070--1075.
+
+Dapporto L, Ciolli G, Dennis RLH, Fox R & Shreeve TG (2015) A new procedure
+for extrapolating turnover regionalization at mid-small spatial scales,
+tested on British butterflies. \emph{Methods in Ecology and Evolution} 6
+, 1287--1297.
 }
 \seealso{
+For more details illustrated with a practical example,
+see the vignette:
+\url{https://biorgeo.github.io/bioregion/articles/a4_1_hierarchical_clustering.html}.
+
+Associated functions:
 \link{cut_tree}
 }
 \author{
-Boris Leroy (\email{leroy.boris@gmail.com}),
-Pierre Denelle (\email{pierre.denelle@gmail.com}) and
+Boris Leroy (\email{leroy.boris@gmail.com}) \cr
+Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
 Maxime Lenormand (\email{maxime.lenormand@inrae.fr})
 }

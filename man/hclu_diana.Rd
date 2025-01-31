@@ -15,58 +15,58 @@ hclu_diana(
 )
 }
 \arguments{
-\item{dissimilarity}{the output object from \code{\link[=dissimilarity]{dissimilarity()}} or
+\item{dissimilarity}{The output object from \code{\link[=dissimilarity]{dissimilarity()}} or
 \code{\link[=similarity_to_dissimilarity]{similarity_to_dissimilarity()}}, or a \code{dist} object.
 If a \code{data.frame} is used, the first two
-columns represent pairs of sites (or any pair of nodes), and the next
-column(s) are the dissimilarity indices.}
+columns represent pairs of sites (or any pair of nodes), and the remaining
+column(s) contain the dissimilarity indices.}
 
-\item{index}{name or number of the dissimilarity column to use. By default,
+\item{index}{The name or number of the dissimilarity column to use. By default,
 the third column name of \code{dissimilarity} is used.}
 
-\item{n_clust}{an \code{integer} or an \code{integer} vector indicating the number of
-clusters to be obtained from the hierarchical tree, or the output from
-\link{partition_metrics}. Should not be used at the same time as
+\item{n_clust}{An \code{integer} vector or a single \code{integer} indicating the
+number of clusters to be obtained from the hierarchical tree, or the output
+from \link{bioregionalization_metrics}. Should not be used concurrently with
 \code{cut_height}.}
 
-\item{cut_height}{a \code{numeric} vector indicating the height(s) at which the
-tree should be cut. Should not be used at the same time as \code{n_clust}.}
+\item{cut_height}{A \code{numeric} vector indicating the height(s) at which the
+tree should be cut. Should not be used concurrently with \code{n_clust}.}
 
-\item{find_h}{a \code{boolean} indicating if the height of cut should be found for
-the requested \code{n_clust}.}
+\item{find_h}{A \code{boolean} indicating whether the cutting height should be
+determined for the requested \code{n_clust}.}
 
-\item{h_max}{a \code{numeric} indicating the maximum possible tree height for
-the chosen \code{index}.}
-
-\item{h_min}{a \code{numeric} indicating the minimum possible height in the tree
+\item{h_max}{A \code{numeric} value indicating the maximum possible tree height
 for the chosen \code{index}.}
+
+\item{h_min}{A \code{numeric} value indicating the minimum possible height in the
+tree for the chosen \code{index}.}
 }
 \value{
 A \code{list} of class \code{bioregion.clusters} with five slots:
 \enumerate{
-\item{\strong{name}: \code{character} containing the name of the algorithm}
-\item{\strong{args}: \code{list} of input arguments as provided by the user}
-\item{\strong{inputs}: \code{list} of characteristics of the clustering process}
-\item{\strong{algorithm}: \code{list} of all objects associated with the
-clustering procedure, such as original cluster objects}
-\item{\strong{clusters}: \code{data.frame} containing the clustering results}}
+\item{\strong{name}: A \code{character} string containing the name of the algorithm.}
+\item{\strong{args}: A \code{list} of input arguments as provided by the user.}
+\item{\strong{inputs}: A \code{list} describing the characteristics of the clustering process.}
+\item{\strong{algorithm}: A \code{list} containing all objects associated with the
+clustering procedure, such as the original cluster objects.}
+\item{\strong{clusters}: A \code{data.frame} containing the clustering results.}}
 }
 \description{
 This function computes a divisive hierarchical clustering from a
-dissimilarity (beta-diversity) \code{data.frame}, calculates the cophenetic correlation
-coefficient, and can get clusters from the tree if requested by the user.
-The function implements randomization of the dissimilarity matrix to
-generate the tree, with a selection method based on the optimal cophenetic
+dissimilarity (beta-diversity) \code{data.frame}, calculates the cophenetic
+correlation coefficient, and can generate clusters from the tree if requested
+by the user. The function implements randomization of the dissimilarity matrix
+to generate the tree, with a selection method based on the optimal cophenetic
 correlation coefficient. Typically, the dissimilarity \code{data.frame} is a
 \code{bioregion.pairwise.metric} object obtained by running \code{similarity}
-or \code{similarity} and then \code{similarity_to_dissimilarity}.
+or \code{similarity} followed by \code{similarity_to_dissimilarity}.
 }
 \details{
 The function is based on \link[cluster:diana]{diana}.
-Chapter 6 of Kaufman and Rousseeuw (1990) fully details the functioning of
+Chapter 6 of Kaufman & Rousseeuw (1990) fully details the functioning of
 the diana algorithm.
 
-To find an optimal number of clusters, see \code{\link[=partition_metrics]{partition_metrics()}}
+To find an optimal number of clusters, see \code{\link[=bioregionalization_metrics]{bioregionalization_metrics()}}
 }
 \examples{
 comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
@@ -83,13 +83,20 @@ fish_diana <- hclu_diana(fishdissim, index = "Simpson")
 
 }
 \references{
-\insertRef{Kaufman2009}{bioregion}
+Kaufman L & Rousseeuw PJ (2009) Finding groups in data: An introduction to
+cluster analysis. In & Sons. JW (ed.), \emph{Finding groups in data: An
+introduction to cluster analysis}.
 }
 \seealso{
+For more details illustrated with a practical example,
+see the vignette:
+\url{https://biorgeo.github.io/bioregion/articles/a4_1_hierarchical_clustering.html}.
+
+Associated functions:
 \link{cut_tree}
 }
 \author{
-Pierre Denelle (\email{pierre.denelle@gmail.com}),
-Boris Leroy (\email{leroy.boris@gmail.com}) and
+Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
+Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 Maxime Lenormand (\email{maxime.lenormand@inrae.fr})
 }

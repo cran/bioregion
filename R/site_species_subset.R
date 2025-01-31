@@ -1,29 +1,30 @@
-#' Extract a subset of node from a bioregion.clusters object
+#' Extract a subset of sites or species from a `bioregion.clusters` object
 #'
-#' This function extracts a subset of node according to its type (sites or 
-#' species) from a bioregion.clusters object containing both types of 
+#' This function extracts a subset of nodes based on their type (`"site"` or 
+#' `"species"`) from a `bioregion.clusters` object, which contains both types of 
 #' nodes (sites and species).
 #'
-#' @param clusters an object of class `bioregion.clusters`.
+#' @param clusters An object of class `bioregion.clusters`.
+#' 
+#' @param node_type A `character` string indicating the type of nodes to 
+#' extract. Possible values are `"site"` or `"species"`. The default is 
+#' `"site"`.
 #'
-#' @param node_type a `character` indicating what types of nodes
-#' ("sites" or "species") should be extracted
-#' (`node_type = "sites"` by default).
-#'
-#' @return An object of class `bioregion.clusters` with a given node type (sites 
-#' or species).
+#' @return 
+#' An object of class `bioregion.clusters` containing only the specified 
+#' node type (sites or species).
 #' 
 #' @note 
-#' The network clustering functions (prefix `netclu_`) may return both types of 
-#' nodes (sites and species) when applied on bipartite networks 
-#' (argument `bipartite`). In this case, the type of nodes returned in the 
-#' output can be chosen with the argument `return_node_type`. This function 
-#' allows to retrieve a particular type of nodes (sites or species) from the 
-#' output and modify the return_node_type accordingly.
+#' Network clustering functions (prefixed with `netclu_`) may return both types
+#' of nodes (sites and species) when applied to bipartite networks (using the 
+#' `bipartite` argument). In such cases, the type of nodes included in the 
+#' output can be specified with the `return_node_type` argument. This function 
+#' allows you to extract a particular type of nodes (sites or species) from the
+#' output and adjust the `return_node_type` attribute accordingly.
 #'
 #' @author
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}),
-#' Pierre Denelle (\email{pierre.denelle@gmail.com}) and
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
+#' Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
 #' Boris Leroy (\email{leroy.boris@gmail.com})
 #'
 #' @examples
@@ -35,16 +36,18 @@
 #'
 #' clusters <- netclu_louvain(net, lang = "igraph", bipartite = TRUE)
 #' 
-#' clusters_sites <- subset_node(clusters, node_type = "sites")
+#' clusters_sites <- site_species_subset(clusters, node_type = "site")
 #'
 #' @export
-subset_node <- function(clusters, node_type = "sites") {
+site_species_subset <- function(clusters, 
+                                node_type = "site") {
 
   # Control node_type
   controls(args = node_type, data = NULL, type = "character")
-  if (!(node_type %in% c("sites", "species"))) {
-    stop("Please choose node_type among the followings values:
-sites and species", call. = FALSE)
+  if (!(node_type %in% c("site", "species"))) {
+    stop(paste0("Please choose node_type from the following:\n",
+                "sites and species"), 
+                call. = FALSE)
   }
   
   # Control input 
@@ -86,7 +89,7 @@ sites and species", call. = FALSE)
   }
   
   # Get type
-  if(node_type == "sites"){
+  if(node_type == "site"){
     clusters$clusters <- clusters$clusters[
       attributes(clusters$clusters)$node_type == "site", ]
   }
@@ -98,8 +101,6 @@ sites and species", call. = FALSE)
   # Update return_node_type
   clusters$args$return_node_type <- node_type
 
-
   # Return output
   return(clusters)
-  
 }

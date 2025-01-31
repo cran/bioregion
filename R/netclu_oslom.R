@@ -3,68 +3,90 @@
 #' This function finds communities in a (un)weighted (un)directed network based
 #' on the OSLOM algorithm (<http://oslom.org/>, version 2.4).
 #'
-#' @param net the output object from [similarity()] or
+#' @param net The output object from [similarity()] or
 #' [dissimilarity_to_similarity()].
 #' If a `data.frame` is used, the first two columns represent pairs of
 #' sites (or any pair of nodes), and the next column(s) are the similarity
 #' indices.
 #'
-#' @param weight a `boolean` indicating if the weights should be considered
+#' @param weight A `boolean` indicating if the weights should be considered
 #' if there are more than two columns.
 #' 
-#' @param cut_weight a minimal weight value. If `weight` is TRUE, the links 
+#' @param cut_weight A minimal weight value. If `weight` is TRUE, the links 
 #' between sites with a weight strictly lower than this value will not be 
-#' considered (O by default).
+#' considered (0 by default).
 #'
-#' @param index name or number of the column to use as weight. By default,
+#' @param index Name or number of the column to use as weight. By default,
 #' the third column name of `net` is used.
 #' 
-#' @param seed for the random number generator (NULL for random by default).
+#' @param seed For the random number generator (NULL for random by default).
 #'
-#' @param reassign a `character` indicating if the nodes belonging to several
-#' community should be reassign and what method should be used (see Note).
+#' @param reassign A `character` indicating if the nodes belonging to several
+#' community should be reassigned and what method should be used (see Note).
 #'
-#' @param r the number of runs for the first hierarchical level
+#' @param r The number of runs for the first hierarchical level
 #' (10 by default).
 #'
-#' @param hr the number of runs for the higher hierarchical level (50 by
+#' @param hr The number of runs for the higher hierarchical level (50 by
 #' default, 0 if you are not interested in hierarchies).
 #'
-#' @param t the p-value, the default value is 0.10, increase this value you to
-#' get more modules.
+#' @param t The p-value, the default value is 0.10. Increase this value if you want
+#' more modules.
 #'
-#' @param cp kind of resolution parameter used to decide between taking some
-#' modules or their union (default value is 0.5, bigger value leads to bigger
+#' @param cp Kind of resolution parameter used to decide between taking some
+#' modules or their union (default value is 0.5; a bigger value leads to bigger
 #' clusters).
 #'
-#' @param directed a `boolean` indicating if the network is directed (from
+#' @param directed A `boolean` indicating if the network is directed (from
 #' column 1 to column 2).
 #'
-#' @param bipartite a `boolean` indicating if the network is bipartite
+#' @param bipartite A `boolean` indicating if the network is bipartite
 #' (see Details).
 #'
-#' @param site_col name or number for the column of site nodes
+#' @param site_col Name or number for the column of site nodes
 #' (i.e. primary nodes).
 #'
-#' @param species_col name or number for the column of species nodes
+#' @param species_col Name or number for the column of species nodes
 #' (i.e. feature nodes).
 #'
-#' @param return_node_type a `character` indicating what types of nodes
-#' (`site`, `species` or `both`) should be returned in the output
+#' @param return_node_type A `character` indicating what types of nodes
+#' (`site`, `species`, or `both`) should be returned in the output
 #' (`return_node_type = "both"` by default).
 #'
-#' @param binpath a `character` indicating the path to the bin folder
+#' @param binpath A `character` indicating the path to the bin folder
 #' (see [install_binaries] and Details).
 #'
-#' @param path_temp a `character` indicating the path to the temporary folder
+#' @param check_install A `boolean` indicating if the function should check that
+#' the OSLOM has been properly installed (see [install_binaries] and Details).
+#'
+#' @param path_temp A `character` indicating the path to the temporary folder
 #' (see Details).
 #'
-#' @param delete_temp a `boolean` indicating if the temporary folder should
+#' @param delete_temp A `boolean` indicating if the temporary folder should
 #' be removed (see Details).
+#' 
+#' @return
+#' A `list` of class `bioregion.clusters` with five slots:
+#' \enumerate{
+#' \item{**name**: A `character` containing the name of the algorithm.}
+#' \item{**args**: A `list` of input arguments as provided by the user.}
+#' \item{**inputs**: A `list` of characteristics of the clustering process.}
+#' \item{**algorithm**: A `list` of all objects associated with the
+#'  clustering procedure, such as original cluster objects (only if
+#'  `algorithm_in_output = TRUE`).}
+#' \item{**clusters**: A `data.frame` containing the clustering results.}}
+#'
+#' In the `algorithm` slot, users can find the following elements:
+#'
+#' \itemize{
+#' \item{`cmd`: The command line used to run OSLOM.}
+#' \item{`version`: The OSLOM version.}
+#' \item{`web`: The OSLOM's web site.}
+#' }
 #'
 #' @details
 #' OSLOM is a network community detection algorithm proposed in
-#' \insertCite{Lancichinetti2011}{bioregion} that finds statistically significant
+#' Lancichinetti et al. (2011) that finds statistically significant
 #' (overlapping) communities in (un)weighted and (un)directed networks.
 #'
 #' This function is based on the 2.4 C++ version of OSLOM
@@ -72,61 +94,57 @@
 #' to run. They can be installed with [install_binaries]. 
 #' 
 #' **If you changed the default path to the `bin` folder
-#' while running [install_binaries] PLEASE MAKE SURE to set `binpath` 
+#' while running [install_binaries], PLEASE MAKE SURE to set `binpath` 
 #' accordingly.**
+#' 
+#' **If you did not use [install_binaries] to change the permissions and test 
+#' the binary files, PLEASE MAKE SURE to set `check_install` accordingly.**
 #'
 #' The C++ version of OSLOM generates temporary folders and/or files that are
-#' stored in the `path_temp` folder (folder "oslom_temp" with an unique timestamp
+#' stored in the `path_temp` folder (folder "oslom_temp" with a unique timestamp
 #' located in the bin folder in `binpath` by default). This temporary folder is 
 #' removed by default (`delete_temp = TRUE`).
 #'
 #' @note
 #' Although this algorithm was not primarily designed to deal with bipartite
-#' network, it is possible to consider the bipartite network as unipartite
+#' networks, it is possible to consider the bipartite network as unipartite
 #' network (`bipartite = TRUE`). Do not forget to indicate which of the
 #' first two columns is dedicated to the site nodes (i.e. primary nodes) and
-#' species nodes (i.e.feature nodes) using the arguments `site_col` and
+#' species nodes (i.e. feature nodes) using the arguments `site_col` and
 #' `species_col`. The type of nodes returned in the output can be chosen
 #' with the argument `return_node_type` equal to `both` to keep both
-#' types of nodes, `sites` to preserve only the sites nodes and
+#' types of nodes, `sites` to preserve only the sites nodes, and
 #' `species` to preserve only the species nodes.
 #'
-#' Since OSLOM potentially returns overlapping communities we propose two
-#' methods to reassign the 'overlapping' nodes randomly `reassign = "random"`
-#' or based on the closest candidate community `reassign = "simil"` (only for
+#' Since OSLOM potentially returns overlapping communities, we propose two
+#' methods to reassign the 'overlapping' nodes: randomly (`reassign = "random"`)
+#' or based on the closest candidate community (`reassign = "simil"`) (only for
 #' weighted networks, in this case the closest candidate community is
-#' determined with the average similarity). By default `reassign = "no"` and
+#' determined with the average similarity). By default, `reassign = "no"` and
 #' all the information will be provided. The number of partitions will depend
 #' on the number of overlapping modules (up to three). The suffix `_semel`,
-#' `_bis` and `_ter` are added to the column names. The first partition
+#' `_bis`, and `_ter` are added to the column names. The first partition
 #' (`_semel`) assigns a module to each node. A value of `NA` in the second
 #' (`_bis`) and third (`_ter`) columns indicates that no overlapping module
-#' were found for this node (i.e. non-overlapping nodes).
-#'
-#' @return
-#' A `list` of class `bioregion.clusters` with five slots:
-#' \enumerate{
-#' \item{**name**: `character` containing the name of the algorithm}
-#' \item{**args**: `list` of input arguments as provided by the user}
-#' \item{**inputs**: `list` of characteristics of the clustering process}
-#' \item{**algorithm**: `list` of all objects associated with the
-#'  clustering procedure, such as original cluster objects}
-#' \item{**clusters**: `data.frame` containing the clustering results}}
-#'
-#' In the `algorithm` slot, users can find the following elements:
-#'
-#' \itemize{
-#' \item{`cmd`: the command line use to run OSLOM}
-#' \item{`version`: the OSLOM version}
-#' \item{`web`: the OSLOM's web site}
-#' }
+#' was found for this node (i.e. non-overlapping nodes).
+#' 
+#' @references 
+#' Lancichinetti A, Radicchi F, Ramasco JJ & Fortunato S (2011) Finding 
+#' statistically significant communities in networks. \emph{PLOS ONE} 6, 
+#' e18961.
+#' 
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a4_3_network_clustering.html}.
+#' 
+#' Associated functions: 
+#' [netclu_greedy] [netclu_infomap] [netclu_louvain]
 #'
 #' @author
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}),
-#' Pierre Denelle (\email{pierre.denelle@gmail.com}) and
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
+#' Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
 #' Boris Leroy (\email{leroy.boris@gmail.com})
-#'
-#' @seealso [install_binaries()], [netclu_infomap()], [netclu_louvain()]
 #'
 #' @examples
 #' comat <- matrix(sample(1000, 50), 5, 10)
@@ -135,9 +153,6 @@
 #'
 #' net <- similarity(comat, metric = "Simpson")
 #' com <- netclu_oslom(net)
-#'
-#' @references
-#' \insertRef{Lancichinetti2011}{bioregion}
 #'
 #' @export
 netclu_oslom <- function(net,
@@ -156,11 +171,13 @@ netclu_oslom <- function(net,
                          species_col = 2,
                          return_node_type = "both",
                          binpath = "tempdir",
+                         check_install = TRUE,
                          path_temp = "oslom_temp",
                          delete_temp = TRUE) {
   
   # Control and set binpath
   controls(args = binpath, data = NULL, type = "character")
+  controls(args = check_install, data = NULL, type = "boolean")
   controls(args = path_temp, data = NULL, type = "character")
   controls(args = delete_temp, data = NULL, type = "boolean")
   if (binpath == "tempdir") {
@@ -181,27 +198,29 @@ netclu_oslom <- function(net,
   check <- FALSE
   controls(args = directed, data = NULL, type = "boolean")
   if (!directed) {
-    if (!file.exists(paste0(binpath, "/bin/OSLOM/check.txt"))) {
-      message(
-        "OSLOM is not installed... Please have a look at
-              https://bioRgeo.github.io/bioregion/articles/a1_install_binary_files.html
-              for more details.\n",
-        "It should be located in ",
-        paste0(binpath, "/bin/OSLOM/")
-      )
+    if (check_install &
+        !file.exists(paste0(binpath, "/bin/OSLOM/check.txt"))) {
+      message(paste0("OSLOM is not installed... Please have a look at ",
+                     "https://bioRgeo.github.io/bioregion/articles/a1_install_binary_files.html ",
+                     "for more details.\n",
+                     "It should be located in ",
+                     binpath, 
+                     "/bin/OSLOM/"))
     } else {
       check <- TRUE
     }
   } else {
-    if (!file.exists(paste0(binpath, "/bin/OSLOM/check.txt"))) {
-      message("OSLOM is not installed... Please have a look at
-              https://bioRgeo.github.io/bioregion/articles/a3_1_install_binary_files.html
-              for more details.")
+    if (check_install &
+        !file.exists(paste0(binpath, "/bin/OSLOM/check.txt"))) {
+      message(paste0("OSLOM is not installed... Please have a look at ",
+                     "https://bioRgeo.github.io/bioregion/articles/a3_1_install_binary_files.html ",
+                     "for more details."))
     } else {
       if (!file.exists(paste0(binpath, "/bin/OSLOM/checkdir.txt"))) {
-        message("The directed version of OSLOM is not installed... Please have
-                a look at https://bioRgeo.github.io/bioregion/articles/a3_1_install_binary_files.html
-                for more details")
+        message(paste0("The directed version of OSLOM is not installed... ", 
+                       " Please have a look at ",
+                       "https://bioRgeo.github.io/bioregion/articles/a3_1_install_binary_files.html ",
+                       "for more details"))
       } else {
         check <- TRUE
       }
@@ -213,8 +232,9 @@ netclu_oslom <- function(net,
     # Control parameters OSLOM
     controls(args = reassign, data = NULL, type = "character")
     if (!(reassign %in% c("no", "random", "simil"))) {
-      stop("Please choose reassign among the following values: 
-no, random or simil")
+      stop(paste0("Please choose reassign from the following:\n",
+                  "no, random or simil."), 
+           call. = FALSE)   
     }
     controls(args = r, data = NULL, type = "strict_positive_integer")
     controls(args = hr, data = NULL, type = "positive_integer")
@@ -237,12 +257,17 @@ no, random or simil")
       controls(args = NULL, data = net, type = "input_similarity")
     }
     controls(args = NULL, data = net, type = "input_net")
+    
+    # Convert tibble into dataframe
+    if(inherits(net, "tbl_df")){
+      net <- as.data.frame(net)
+    }
 
     # Control input weight & index
     controls(args = weight, data = net, type = "input_net_weight")
     if (reassign == "simil" & !weight) {
-      stop("A reassignement based on similarity should not be use when weight
-           equal FALSE")
+      stop(paste0("A reassignement based on similarity should not be ",
+                  "use when weight equal FALSE"))
     }
     if (weight) {
       controls(args = cut_weight, data = net, type = "positive_numeric")
@@ -261,10 +286,11 @@ no, random or simil")
       controls(args = site_col, data = net, type = "input_net_bip_col")
       controls(args = species_col, data = net, type = "input_net_bip_col")
       controls(args = return_node_type, data = NULL, type = "character")
-      if (!(return_node_type %in% c("both", "sites", "species"))) {
-        stop("Please choose return_node_type among the followings values:
-both, sites or species", call. = FALSE)
-      }
+      if (!(return_node_type %in% c("both", "site", "species"))) {
+        stop(paste0("Please choose return_node_type from the following:\n",
+                    "both, sites or species."), 
+             call. = FALSE) 
+      }  
     }
 
     # Control input directed
@@ -292,8 +318,9 @@ both, sites or species", call. = FALSE)
       )
     } else {
       if (dir.exists(path_temp)) {
-        stop(paste0(path_temp, " already exists. Please rename it or remove
-                    it."),
+        stop(paste0(path_temp, 
+                    " already exists. Please rename ", 
+                    "it or remove it."),
           call. = FALSE
         )
       }
@@ -354,9 +381,10 @@ both, sites or species", call. = FALSE)
       site_col = site_col,
       species_col = species_col,
       return_node_type = return_node_type,
+      binpath = binpath,
+      check_install = check_install,
       delete_temp = delete_temp,
-      path_temp = path_temp,
-      binpath = binpath
+      path_temp = path_temp
     )
 
     outputs$inputs <- list(
@@ -1079,7 +1107,7 @@ both, sites or species", call. = FALSE)
     if (isbip) {
       attr(com, "node_type") <- rep("site", dim(com)[1])
       attributes(com)$node_type[!is.na(match(com[, 1], idfeat))] <- "species"
-      if (return_node_type == "sites") {
+      if (return_node_type == "site") {
         com <- com[attributes(com)$node_type == "site", ]
       }
       if (return_node_type == "species") {

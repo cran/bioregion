@@ -1,57 +1,67 @@
-#' Non hierarchical clustering: CLARANS
+#' Non-hierarchical clustering: CLARANS
 #'
-#' This function performs non hierarchical clustering on the basis of
-#' dissimilarity with partitioning around medoids, using the Clustering Large
+#' This function performs non-hierarchical clustering based on dissimilarity 
+#' using partitioning around medoids, implemented via the Clustering Large 
 #' Applications based on RANdomized Search (CLARANS) algorithm.
 #'
-#' @param dissimilarity the output object from [dissimilarity()] or
-#' [similarity_to_dissimilarity()], or a `dist` object. If a `data.frame` is
-#' used, the first two columns represent pairs of sites (or any pair of nodes),
-#' and the next column(s) are the dissimilarity indices.
-#' 
-#' @param index name or number of the dissimilarity column to use. By default, 
-#' the third column name of `dissimilarity` is used.
-#' 
-#' @param seed for the random number generator (NULL for random by default).
-#' 
-#' @param n_clust an `integer` or an `integer` vector specifying the
-#' requested number(s) of clusters.
-#' 
-#' @param numlocal an `integer` defining the number of samples to draw.
-#' 
-#' @param maxneighbor a positive `numeric` defining the sampling rate.
-#' 
-#' @param algorithm_in_output a `boolean` indicating if the original output
-#' of [fastclarans][fastkmedoids::fastclarans] should be returned in the output (`TRUE` by 
-#' default, see Value).
+#' @param dissimilarity The output object from [dissimilarity()] or 
+#' [similarity_to_dissimilarity()], or a `dist` object. If a `data.frame` is 
+#' used, the first two columns should represent pairs of sites (or any pair of 
+#' nodes), and the subsequent column(s) should contain the dissimilarity indices.
+#'
+#' @param index The name or number of the dissimilarity column to use. By 
+#' default, the third column name of `dissimilarity` is used.
+#'
+#' @param seed A value for the random number generator (`NULL` for random 
+#' initialization by default).
+#'
+#' @param n_clust An `integer` vector or a single `integer` specifying the 
+#' desired number(s) of clusters.
+#'
+#' @param numlocal An `integer` defining the number of local searches to perform.
+#'
+#' @param maxneighbor A positive `numeric` value defining the maximum number of 
+#' neighbors to consider for each local search.
+#'
+#' @param algorithm_in_output A `boolean` indicating whether the original output 
+#' of [fastclarans][fastkmedoids::fastclarans] should be included in the output. 
+#' Defaults to `TRUE` (see Value).
+#'
+#' @return
+#' A `list` of class `bioregion.clusters` with five components:
+#' \enumerate{
+#' \item{**name**: A `character` string containing the name of the algorithm.}
+#' \item{**args**: A `list` of input arguments as provided by the user.}
+#' \item{**inputs**: A `list` of characteristics of the clustering process.}
+#' \item{**algorithm**: A `list` of all objects associated with the clustering 
+#' procedure, such as original cluster objects (only if 
+#' `algorithm_in_output = TRUE`).}
+#' \item{**clusters**: A `data.frame` containing the clustering results.}}
+#'
+#' If `algorithm_in_output = TRUE`, the `algorithm` slot includes the output of 
+#' [fastclarans][fastkmedoids::fastclarans].
 #' 
 #' @details
 #' Based on [fastkmedoids](https://cran.r-project.org/package=fastkmedoids)
 #' package ([fastclarans][fastkmedoids::fastclarans]).
-#'
-#' @return
-#' A `list` of class `bioregion.clusters` with five slots:
-#' \enumerate{
-#' \item{**name**: `character` containing the name of the algorithm}
-#' \item{**args**: `list` of input arguments as provided by the user}
-#' \item{**inputs**: `list` of characteristics of the clustering process}
-#' \item{**algorithm**: `list` of all objects associated with the
-#'  clustering procedure, such as original cluster objects}
-#' \item{**clusters**: `data.frame` containing the clustering results}}
 #' 
-#' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can
-#' find the output of
-#' [fastclarans][fastkmedoids::fastclarans].
-#' 
-#' @references
-#' \insertRef{Schubert2019}{bioregion}
+#' @references 
+#' Schubert E & Rousseeuw PJ (2019) Faster k-Medoids Clustering: Improving the 
+#' PAM, CLARA, and CLARANS Algorithms. \emph{Similarity Search and Applications}
+#' 11807, 171-187.
 #' 
 #' @author
-#' Pierre Denelle (\email{pierre.denelle@gmail.com}),
-#' Boris Leroy (\email{leroy.boris@gmail.com}), and
+#' Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 #' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) 
 #' 
-#' @seealso [nhclu_pam] 
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a4_2_non_hierarchical_clustering.html}.
+#' 
+#' Associated functions: 
+#' [nhclu_clara] [nhclu_dbscan] [nhclu_kmeans] [nhclu_pam] [nhclu_affprop] 
 #' 
 #' @examples
 #' comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
@@ -61,11 +71,7 @@
 #'
 #' dissim <- dissimilarity(comat, metric = "all")
 #'
-#' clust1 <- nhclu_clarans(dissim, index = "Simpson", n_clust = 5)
-#' 
-#' partition_metrics(clust1, dissimilarity = dissim,
-#' eval_metric = "pc_distance")
-#' 
+#' #clust <- nhclu_clarans(dissim, index = "Simpson", n_clust = 5)
 #'    
 #' @importFrom stats as.dist
 #' @importFrom fastkmedoids fastclarans    
@@ -88,6 +94,10 @@ nhclu_clarans <- function(dissimilarity,
              type = "input_data_frame_nhandhclu")
     controls(args = index, data = dissimilarity, type = "input_net_index")
     net <- dissimilarity
+    # Convert tibble into dataframe
+    if(inherits(net, "tbl_df")){
+      net <- as.data.frame(net)
+    }
     net[, 3] <- net[, index]
     net <- net[, 1:3]
     controls(args = NULL, data = net, type = "input_net_index_value")
@@ -145,18 +155,7 @@ nhclu_clarans <- function(dissimilarity,
   outputs$clusters$name <- labels(dist.obj)
   
   # CLARANS algorithm
-  if(is.null(seed)){
-    outputs$algorithm <-
-      lapply(n_clust,
-             function(x)
-               fastkmedoids::fastclarans(rdist = dist.obj,
-                                         n = nrow(dist.obj),
-                                         k = x,
-                                         numlocal = numlocal,
-                                         maxneighbor = maxneighbor,
-                                         seed = as.numeric(as.POSIXct(
-                                           Sys.time())) + sample(-10:10, 1)))
-  }else{
+  if(!is.null(seed)){
     outputs$algorithm <-
       lapply(n_clust,
              function(x)
@@ -166,7 +165,17 @@ nhclu_clarans <- function(dissimilarity,
                                          numlocal = numlocal,
                                          maxneighbor = maxneighbor,
                                          seed = seed))
-  }
+  }else{
+    outputs$algorithm <-
+      lapply(n_clust,
+             function(x)
+               fastkmedoids::fastclarans(rdist = dist.obj,
+                                         n = nrow(dist.obj),
+                                         k = x,
+                                         numlocal = numlocal,
+                                         maxneighbor = maxneighbor,
+                                         seed = seedrng()))
+  }  
   names(outputs$algorithm) <- paste0("K_", n_clust)
   
   outputs$clusters <- data.frame(

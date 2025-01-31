@@ -12,7 +12,7 @@
 
 <meta name="author" content="Maxime Lenormand, Boris Leroy and Pierre Denelle" />
 
-<meta name="date" content="2024-11-11" />
+<meta name="date" content="2025-01-31" />
 
 <title>Tutorial for bioregion</title>
 
@@ -255,13 +255,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Tutorial for bioregion</h1>
 <h4 class="author">Maxime Lenormand, Boris Leroy and Pierre Denelle</h4>
-<h4 class="date">2024-11-11</h4>
+<h4 class="date">2025-01-31</h4>
 
 
 
 <div id="brief-introduction" class="section level2">
 <h2>0. Brief introduction</h2>
-<p>This tutorial aims at describing the different features of the R package <code>bioregion</code>. The main purpose of the <code>bioregion</code>‘s package is to propose a transparent methodological framework to compare bioregionalisation methods. Below is the typical flow chart of bioregions’ identification based on a site-species bipartite network or co-occurrence matrix with <code>bioregion</code> (Figure 1). This workflow can be divided into four main steps:</p>
+<p>This tutorial aims at describing the different features of the R package <code>bioregion</code>. The main purpose of the <code>bioregion</code>‘s package is to propose a transparent methodological framework to compare bioregionalization methods. Below is the typical flow chart of bioregions’ identification based on a site-species bipartite network or co-occurrence matrix with <code>bioregion</code> (Figure 1). This workflow can be divided into four main steps:</p>
 <ol style="list-style-type: decimal">
 <li>Preprocess the data (matrix or network formats)</li>
 <li>Compute similarity/dissimilarity metrics between sites based on species composition</li>
@@ -299,9 +299,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>The functions <a href="https://bioRgeo.github.io/bioregion/reference/dissimilarity_to_similarity.html">dissimilarity_to_similarity</a> and <a href="https://bioRgeo.github.io/bioregion/reference/dissimilarity_to_similarity.html">similarity_to_dissimilarity</a> can be used to transform a similarity object into a dissimilarity object and vice versa.</p>
 <p>Please have a look at this <a href="https://bioRgeo.github.io/bioregion/articles/a3_pairwise_metrics.html">tutorial page</a> to better understand how these functions work.</p>
 </div>
-<div id="clustering-algorithms" class="section level2">
-<h2>4. Clustering algorithms</h2>
-<p>The <code>bioregion</code> R package gathers several methods allowing to group sites and species into similar entities called bioregions. All these methods can lead to several partitions of sites and species, i.e. to different bioregionalisations. <br> Bioregionalisation methods can be based on hierarchical clustering algorithms, non-hierarchical clustering algorithms or network algorithms. <br> The functions in the package are related to each of these three families and produce output that have a specific class, namely the <code>bioregion.clusters</code> class. <br></p>
+<div id="bioregionalization-algorithms" class="section level2">
+<h2>4. Bioregionalization algorithms</h2>
+<p>The <code>bioregion</code> R package gathers several methods allowing to group sites and species into similar entities called bioregions. All these methods can lead to several partitions of sites and species, i.e. to different bioregionalizations. <br> Bioregionalization methods can be based on hierarchical clustering algorithms, non-hierarchical clustering algorithms or network algorithms. <br> The functions in the package are related to each of these three families and produce output that have a specific class, namely the <code>bioregion.clusters</code> class. <br></p>
 <div id="hierarchical-clustering" class="section level3">
 <h3>4.1 Hierarchical clustering</h3>
 <p>The functions relying on hierarchical clustering start with the prefix <code>hclu_</code>. With these algorithms, the bioregions are placed into a dendrogram that ranges from two extremes: all sites belong to the same bioregion (top of the tree) or all sites belong to a different bioregion (bottom of the tree).</p>
@@ -309,18 +309,18 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="non-hierarchical-clustering" class="section level3">
 <h3>4.2 Non-hierarchical clustering</h3>
-<p>The functions relying on hierarchical clustering start with the prefix <code>nhclu_</code>. For most of these algorithms, the user needs to predefine the number of clusters, although this number can be determined by estimating the optimal partition.</p>
+<p>The functions relying on hierarchical clustering start with the prefix <code>nhclu_</code>. For most of these algorithms, the user needs to predefine the number of clusters, although this number can be determined by estimating the optimal bioregionalization.</p>
 <p>See this <a href="https://biorgeo.github.io/bioregion/articles/a4_2_non_hierarchical_clustering.html">tutorial page</a> for more details.</p>
 </div>
 <div id="network-clustering" class="section level3">
 <h3>4.3 Network clustering</h3>
 <p>The functions relying on network clustering start with the prefix <code>netclu_</code>. Site-species matrices can be seen as (bipartite) networks where the nodes are either the sites or the species and the links between them are the occurrences of species within sites.<br />
-With networks, modularity algorithms can be applied, leading to bioregionalisation.</p>
+With networks, modularity algorithms can be applied, leading to bioregionalization.</p>
 <p>The following <a href="https://bioRgeo.github.io/bioregion/articles/a4_3_network_clustering.html">tutorial page</a> details more each clustering functions relying on a network algorithm.</p>
 </div>
 <div id="microbenchmark" class="section level3">
 <h3>4.4 Microbenchmark</h3>
-<p>The different bioregionalisation methods listed in the package rely on more or less computationally intensive algorithms.</p>
+<p>The different bioregionalization methods listed in the package rely on more or less computationally intensive algorithms.</p>
 <p>The following <a href="https://biorgeo.github.io/bioregion/articles/a4_4_microbenchmark.html">page</a> estimates the time required to run each method on data sets of different sizes.</p>
 </div>
 </div>
@@ -329,12 +329,16 @@ With networks, modularity algorithms can be applied, leading to bioregionalisati
 </div>
 <div id="visualization" class="section level2">
 <h2>5.1 Visualization</h2>
-<p>If sites have geographic coordinates, then each bioregionalisation can be visualized with the function <code>map_clusters()</code>.</p>
-<p>This <a href="https://biorgeo.github.io/bioregion/articles/a5_1_visualization.html">tutorial page</a> details different ways to plot your bioregionalisation.</p>
+<p>If sites have geographic coordinates, then each bioregionalization can be visualized with the function <code>map_bioregions()</code>.</p>
+<p>This <a href="https://biorgeo.github.io/bioregion/articles/a5_1_visualization.html">tutorial page</a> details different ways to plot your bioregionalization.</p>
 </div>
-<div id="compare-partitions" class="section level2">
-<h2>5.2 Compare partitions</h2>
-<p>In this section, we look at how sites are assigned to bioregions within a single bioregionalization and also compare this assignment across different bioregionalizations. The following <a href="https://biorgeo.github.io/bioregion/articles/a5_2_compare_partitions.html">page</a> illustrates this.</p>
+<div id="compare-bioregionalizations" class="section level2">
+<h2>5.2 Compare bioregionalizations</h2>
+<p>In this section, we look at how sites are assigned to bioregions within a single bioregionalization and also compare this assignment across different bioregionalizations. The following <a href="https://biorgeo.github.io/bioregion/articles/a5_2_compare_bioregionalizations.html">page</a> illustrates this.</p>
+</div>
+<div id="summary-metrics" class="section level2">
+<h2>5.3 Summary metrics</h2>
+<p>In this section, we compute summary statistics at different scales, either at the bioregion or at the site or species level. Related functions are detailed in this <a href="https://biorgeo.github.io/bioregion/articles/a5_3_summary_metrics.html">page</a>.</p>
 </div>
 
 

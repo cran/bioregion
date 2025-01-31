@@ -1,68 +1,76 @@
-#' Non hierarchical clustering: k-means analysis
+#' Non-hierarchical clustering: K-means analysis
 #'
-#' This function performs non hierarchical
-#' clustering on the basis of dissimilarity with a k-means analysis.
+#' This function performs non-hierarchical clustering based on dissimilarity 
+#' using a k-means analysis.
 #'
-#' @param dissimilarity the output object from [dissimilarity()] or
-#' [similarity_to_dissimilarity()], or a `dist` object. If a `data.frame` is
-#' used, the first two columns represent pairs of sites (or any pair of nodes),
-#' and the next column(s) are the dissimilarity indices.
-#' 
-#' @param index name or number of the dissimilarity column to use. By default, 
-#' the third column name of `dissimilarity` is used.
-#' 
-#' @param seed for the random number generator (NULL for random by default).
-#' 
-#' @param n_clust an `integer` or an `integer` vector specifying the
-#' requested number(s) of clusters
-#' 
-#' @param iter_max an `integer` specifying the maximum number of
-#' iterations for the kmeans method (see [kmeans][stats::kmeans])
-#' 
-#' @param nstart an `integer` specifying how many random sets of
-#' `n_clust` should be selected as starting points for the kmeans analysis
-#' (see [kmeans][stats::kmeans])
-#' 
-#' @param algorithm a `character` specifying the algorithm to use for
-#' kmean (see [kmeans][stats::kmeans]). Available options are
-#' Hartigan-Wong, Lloyd, Forgy and MacQueen.
-#' 
-#' @param algorithm_in_output a `boolean` indicating if the original output
-#' of [kmeans][stats::kmeans] should be returned in the output (`TRUE` by 
-#' default, see Value).
+#' @param dissimilarity The output object from [dissimilarity()] or 
+#' [similarity_to_dissimilarity()], or a `dist` object. If a `data.frame` is 
+#' used, the first two columns should represent pairs of sites (or any pair of 
+#' nodes), and the subsequent column(s) should contain the dissimilarity indices.
 #'
-#' @details
-#' This method partitions the data into k groups
-#' such that that the sum of squares of euclidean distances from points to the
-#' assigned cluster centers is minimized. k-means cannot be applied directly
-#' on dissimilarity/beta-diversity metrics, because these distances are not
-#' euclidean. Therefore, it requires first to transform the dissimilarity
-#' matrix with a Principal Coordinate Analysis (using the function
-#' [pcoa][ape::pcoa]), and then applying k-means on the coordinates
-#' of points in the PCoA. Because this makes an additional transformation of
-#' the initial matrix of dissimilarity, the partitioning around medoids method
-#' should be preferred ([nhclu_pam])
-#' 
+#' @param index The name or number of the dissimilarity column to use. By 
+#' default, the third column name of `dissimilarity` is used.
+#'
+#' @param seed A value for the random number generator (`NULL` for random by 
+#' default).
+#'
+#' @param n_clust An `integer` vector or a single `integer` value specifying 
+#' the requested number(s) of clusters.
+#'
+#' @param iter_max An `integer` specifying the maximum number of iterations for 
+#' the k-means method (see [kmeans][stats::kmeans]).
+#'
+#' @param nstart An `integer` specifying how many random sets of `n_clust` 
+#' should be selected as starting points for the k-means analysis 
+#' (see [kmeans][stats::kmeans]).
+#'
+#' @param algorithm A `character` specifying the algorithm to use for k-means 
+#' (see [kmeans][stats::kmeans]). Available options are Hartigan-Wong, Lloyd, 
+#' Forgy, and MacQueen.
+#'
+#' @param algorithm_in_output A `boolean` indicating whether the original 
+#' output of [kmeans][stats::kmeans] should be included in the output. Defaults 
+#' to `TRUE` (see Value).
+#'
 #' @return
-#' A `list` of class `bioregion.clusters` with five slots:
+#' A `list` of class `bioregion.clusters` with five components:
 #' \enumerate{
-#' \item{**name**: `character` containing the name of the algorithm}
-#' \item{**args**: `list` of input arguments as provided by the user}
-#' \item{**inputs**: `list` of characteristics of the clustering process}
-#' \item{**algorithm**: `list` of all objects associated with the
-#'  clustering procedure, such as original cluster objects}
-#' \item{**clusters**: `data.frame` containing the clustering results}}
-#' 
-#' In the `algorithm` slot, if `algorithm_in_output = TRUE`, users can
-#' find the output of
+#' \item{**name**: A `character` string containing the name of the algorithm.}
+#' \item{**args**: A `list` of input arguments as provided by the user.}
+#' \item{**inputs**: A `list` of characteristics of the clustering process.}
+#' \item{**algorithm**: A `list` of all objects associated with the clustering 
+#' procedure, such as original cluster objects (only if 
+#' `algorithm_in_output = TRUE`).}
+#' \item{**clusters**: A `data.frame` containing the clustering results.}}
+#'
+#' If `algorithm_in_output = TRUE`, the `algorithm` slot includes the output of 
 #' [kmeans][stats::kmeans].
 #'
+#' @details
+#' This method partitions data into k groups such that the sum of squares of 
+#' Euclidean distances from points to the assigned cluster centers is minimized. 
+#' K-means cannot be applied directly to dissimilarity or beta-diversity metrics 
+#' because these distances are not Euclidean. Therefore, it first requires 
+#' transforming the dissimilarity matrix using Principal Coordinate Analysis 
+#' (PCoA) with [pcoa][ape::pcoa], and then applying k-means to the coordinates 
+#' of points in the PCoA.
+#'
+#' Because this additional transformation alters the initial dissimilarity 
+#' matrix, the partitioning around medoids method ([nhclu_pam]) is preferred.
+#'
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a4_2_non_hierarchical_clustering.html}.
+#' 
+#' Associated functions: 
+#' [nhclu_clara] [nhclu_clarans] [nhclu_dbscan] [nhclu_pam] [nhclu_affprop] 
+#'
 #' @author
-#' Boris Leroy (\email{leroy.boris@gmail.com}),
-#' Pierre Denelle (\email{pierre.denelle@gmail.com}) and
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
+#' Pierre Denelle (\email{pierre.denelle@gmail.com}) \cr
 #' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) 
 #' 
-#' @seealso  [nhclu_pam]
 #' @examples
 #' comat <- matrix(sample(0:1000, size = 500, replace = TRUE, prob = 1/1:1001),
 #' 20, 25)
@@ -73,13 +81,7 @@
 #'
 #' dissim <- dissimilarity(comat, metric = "all")
 #' 
-#' clust1 <- nhclu_kmeans(dissim, n_clust = 2:10, index = "Simpson")
-#' clust2 <- nhclu_kmeans(dissim, n_clust = 2:15, index = "Simpson")
-#' partition_metrics(clust2, dissimilarity = dissim,
-#'                   eval_metric = "pc_distance")
-#' 
-#' partition_metrics(clust2, net = comnet, species_col = "Node2",
-#'                   site_col = "Node1", eval_metric = "avg_endemism")
+#' clust <- nhclu_kmeans(dissim, n_clust = 2:10, index = "Simpson")
 #'
 #' @importFrom stats as.dist kmeans
 #' @importFrom ape pcoa
@@ -103,6 +105,10 @@ nhclu_kmeans <- function(dissimilarity,
              type = "input_data_frame_nhandhclu")
     controls(args = index, data = dissimilarity, type = "input_net_index")
     net <- dissimilarity
+    # Convert tibble into dataframe
+    if(inherits(net, "tbl_df")){
+      net <- as.data.frame(net)
+    }
     net[, 3] <- net[, index]
     net <- net[, 1:3]
     controls(args = NULL, data = net, type = "input_net_index_value")
@@ -127,11 +133,12 @@ nhclu_kmeans <- function(dissimilarity,
   controls(args = nstart, data = NULL, type = "positive_integer")
   controls(args = algorithm, data = NULL, type = "character")
   if(!(algorithm %in% c("Hartigan-Wong", "Lloyd", "Forgy", "MacQueen"))){
-    stop("Please choose algorithm among the followings values:
-Hartigan-Wong, Lloyd, Forgy or MacQueen", call. = FALSE)
+    stop(paste0("Please choose algorithm from the following:\n",
+                "Hartigan-Wong, Lloyd, Forgy or MacQueen."),
+         call. = FALSE)
   }
   controls(args = algorithm_in_output, data = NULL, type = "boolean")
-
+  
   # 2. Function ---------------------------------------------------------------
   outputs <- list(name = "nhclu_kmeans")
   
@@ -167,7 +174,16 @@ Hartigan-Wong, Lloyd, Forgy or MacQueen", call. = FALSE)
   # kmeans only works on Euclidean distances, so the dissimilarity matrix needs
   # to be transformed into a multivariate space with euclidean distances
   # with a Principal Coordinate Analysis
-  outputs$clustering_algorithms$pcoa <- ape::pcoa(dist.obj)
+  if(length(unique(as.numeric(dist.obj))) == 1 &&
+     unique(as.numeric(dist.obj)) == 0){
+    stop("All sites are completely similar.")
+  } else{
+    if(length(unique(as.numeric(dist.obj))) == 1 &&
+       unique(as.numeric(dist.obj)) == 1){
+      warning("All sites are completely dissimilar.")
+    }
+    outputs$clustering_algorithms$pcoa <- ape::pcoa(dist.obj)
+  }
   
   # Performing the kmeans on the PCoA with all axes
   if(is.null(seed)){

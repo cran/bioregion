@@ -1,17 +1,20 @@
 #' Convert similarity metrics to dissimilarity metrics
 #'
-#' This function converts a `data.frame` of similarity metrics between sites to
-#'  dissimilarity metrics (beta diversity).
+#' This function converts a `data.frame` of similarity metrics between sites 
+#' into dissimilarity metrics (beta diversity).
 #'
-#' @param similarity the output object from [similarity()] or
+#' @param similarity The output object from [similarity()] or 
 #' [dissimilarity_to_similarity()].
 #' 
-#' @param include_formula a `boolean` indicating if the metrics based on your 
-#' own formula(s) should be converted (see Details). This argument is set to 
-#' `TRUE` by default.
+#' @param include_formula A `boolean` indicating whether metrics based on custom 
+#' formula(s) should also be converted (see Details). The default is `TRUE`.
+#' 
+#' @return 
+#' A `data.frame` with additional class 
+#' `bioregion.pairwise.metric`, providing dissimilarity
+#' metric(s) between each pair of sites based on a similarity object.
 #' 
 #' @note
-#' \loadmathjax
 #' The behavior of this function changes depending on column names. Columns
 #' `Site1` and `Site2` are copied identically. If there are columns called
 #' `a`, `b`, `c`, `A`, `B`, `C` they will also be copied identically. If there 
@@ -24,23 +27,25 @@
 #' If a column is called `Euclidean`, its distance will be calculated based
 #' on the following formula:
 #'
-#' \mjeqn{Euclidean distance = (1 - Euclidean similarity) / Euclidean similarity}{Euclidean distance = (1 - Euclidean similarity) / Euclidean similarity}
+#' Euclidean distance = (1 - Euclidean similarity) / Euclidean similarity
 #'
 #' Otherwise, all other columns will be transformed into dissimilarity with the
 #' following formula:
 #'
-#' \mjeqn{dissimilarity = 1 - similarity}{dissimilarity = 1 - similarity}
-#'
-#' @return A `data.frame` with additional class 
-#' `bioregion.pairwise.metric`, providing dissimilarity
-#' metric(s) between each pair of sites based on a similarity object.
+#' dissimilarity = 1 - similarity
+#' 
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a3_pairwise_metrics.html}.
+#' 
+#' Associated functions: 
+#' [dissimilarity] [similarity_to_dissimilarity]
 #'
 #' @author
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}),
-#' Boris Leroy (\email{leroy.boris@gmail.com}) and
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 #' Pierre Denelle (\email{pierre.denelle@gmail.com})
-#' 
-#' @seealso [dissimilarity_to_similarity()] [similarity()] [dissimilarity()]
 #' 
 #' @examples
 #' comat <- matrix(sample(0:1000, size = 50, replace = TRUE,
@@ -107,18 +112,20 @@ similarity_to_dissimilarity <- function(similarity, include_formula = TRUE){
 
 #' Convert dissimilarity metrics to similarity metrics
 #'
-#' This function converts a `data.frame` of dissimilarity metrics (beta diversity)
-#' between sites to similarity metrics.
+#' This function converts a `data.frame` of dissimilarity metrics 
+#' (beta diversity) between sites into similarity metrics.
 #'
-#' @param dissimilarity the output object from [dissimilarity()] or
+#' @param dissimilarity the output object from [dissimilarity()] or 
 #' [similarity_to_dissimilarity()].
 #' 
-#' @param include_formula a `boolean` indicating if the metrics based on your 
-#' own formula(s) should be converted (see Details). This argument is set to 
-#' `TRUE` by default.
+#' @param include_formula a `boolean` indicating whether metrics based on custom 
+#' formula(s) should also be converted (see Details). The default is `TRUE`.
+#' 
+#' @return A `data.frame` with the additional class 
+#' `bioregion.pairwise.metric`, providing similarity metrics for each pair of 
+#' sites based on a dissimilarity object.
 #' 
 #' @note
-#' \loadmathjax
 #' The behavior of this function changes depending on column names. Columns
 #' `Site1` and `Site2` are copied identically. If there are columns called
 #' `a`, `b`, `c`, `A`, `B`, `C` they will also be copied identically. If there 
@@ -132,23 +139,25 @@ similarity_to_dissimilarity <- function(similarity, include_formula = TRUE){
 #' If a column is called `Euclidean`, the similarity will be calculated based
 #' on the following formula:
 #'
-#' \mjeqn{Euclidean similarity = 1 / (1 - Euclidean distance)}{Euclidean similarity = 1 / (1 - Euclidean distance)}
+#' Euclidean similarity = 1 / (1 - Euclidean distance)
 #'
 #' Otherwise, all other columns will be transformed into dissimilarity with the
 #' following formula:
 #'
-#' \mjeqn{similarity = 1 - dissimilarity}{similarity = 1 - dissimilarity}
+#' similarity = 1 - dissimilarity
 #'
-#' @return A `data.frame` with additional class 
-#' `bioregion.pairwise.metric`, providing similarity
-#' metric(s) between each pair of sites based on a dissimilarity object.
+#' @seealso 
+#' For more details illustrated with a practical example, 
+#' see the vignette: 
+#' \url{https://biorgeo.github.io/bioregion/articles/a3_pairwise_metrics.html}.
+#' 
+#' Associated functions: 
+#' [similarity] [dissimilarity_to_similarity]
 #'
 #' @author
-#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}),
-#' Boris Leroy (\email{leroy.boris@gmail.com}) and
+#' Maxime Lenormand (\email{maxime.lenormand@inrae.fr}) \cr
+#' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
 #' Pierre Denelle (\email{pierre.denelle@gmail.com})
-#' 
-#' @seealso [similarity_to_dissimilarity()] [similarity()] [dissimilarity()]
 #' 
 #' @examples
 #' comat <- matrix(sample(0:1000, size = 50, replace = TRUE,
