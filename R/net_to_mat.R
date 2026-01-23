@@ -69,6 +69,12 @@ net_to_mat <- function(net,
     stop("symmetrical only for squared matrix!", call. = FALSE)
   }
 
+  # Convert tibble into dataframe
+  if(inherits(net, "tbl_df")){
+    net <- as.data.frame(net)
+  }
+  
+  # Control net
   controls(args = NULL, data = net, type = "input_net")
   controls(args = weight, data = net, type = "input_net_weight")
   if(weight){
@@ -156,7 +162,7 @@ net_to_mat <- function(net,
 
   # Replace NAs with 0s
   mat[is.na(mat)] <- missing_value
-
+  
   # Check for empty rows and columns if squared = FALSE
   # if(!squared){
   #  mat <- mat[rowSums(mat) > 0,]

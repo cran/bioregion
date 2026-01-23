@@ -10,7 +10,7 @@ hclu_hierarclust(
   method = "average",
   randomize = TRUE,
   n_runs = 100,
-  keep_trials = FALSE,
+  keep_trials = "no",
   optimal_tree_method = "iterative_consensus_tree",
   n_clust = NULL,
   cut_height = NULL,
@@ -18,6 +18,7 @@ hclu_hierarclust(
   h_max = 1,
   h_min = 0,
   consensus_p = 0.5,
+  show_hierarchy = FALSE,
   verbose = TRUE
 )
 }
@@ -43,14 +44,15 @@ matrix.}
 
 \item{n_runs}{The number of trials for randomizing the dissimilarity matrix.}
 
-\item{keep_trials}{A \code{boolean} indicating whether all random trial results
-should be stored in the output object. Set to \code{FALSE} to save space if your
-\code{dissimilarity} object is large. Note that this cannot be set to \code{TRUE} if
-\code{optimal_tree_method = "iterative_consensus_tree"}.}
+\item{keep_trials}{A \code{character} string indicating whether random trial results
+(including the randomized matrix, the associated tree and metrics for that tree)
+should be stored in the output object. Possible values are \code{"no"} (default),
+\code{"all"} or \code{"metrics"}. Note that this parameter is automatically set to
+\code{"no"} if \code{optimal_tree_method = "iterative_consensus_tree"}.}
 
 \item{optimal_tree_method}{A \code{character} string indicating how the final tree
 should be obtained from all trials. Possible values are
-\code{"iterative_consensus_tree"} (default), \code{"best"}, and \code{"consensus"}.
+\code{"iterative_consensus_tree"} (default), \code{"best"} or \code{"consensus"}.
 \strong{We recommend \code{"iterative_consensus_tree"}. See Details.}}
 
 \item{n_clust}{An \code{integer} vector or a single \code{integer} indicating the
@@ -76,8 +78,11 @@ tree for the chosen \code{index}.}
 trees that must support a region/cluster for it to be included in the final
 consensus tree.}
 
-\item{verbose}{A \code{boolean} (applicable only if
-\code{optimal_tree_method = "iterative_consensus_tree"}) indicating whether to
+\item{show_hierarchy}{A \code{boolean} specifying if the hierarchy of clusters
+should be identifiable in the outputs (\code{FALSE} by default). This argument is
+only used if the tree is cut (i.e., \code{n_clust} or \code{cut_height} is provided).}
+
+\item{verbose}{A \code{boolean} indicating whether to
 display progress messages. Set to \code{FALSE} to suppress these messages.}
 }
 \value{
@@ -95,7 +100,7 @@ In the \code{algorithm} slot, users can find the following elements:
 \itemize{
 \item{\code{trials}: A list containing all randomization trials. Each trial
 includes the dissimilarity matrix with randomized site order, the
-associated tree, and the cophenetic correlation coefficient (Spearman) for
+associated tree, and the cophenetic correlation coefficient for
 that tree.}
 \item{\code{final.tree}: An \code{hclust} object representing the final
 hierarchical tree to be used.}
@@ -110,7 +115,7 @@ coefficient, and optionally retrieves clusters from the tree upon user
 request. The function includes a randomization process for the dissimilarity
 matrix to generate the tree, with two methods available for constructing the
 final tree. Typically, the dissimilarity \code{data.frame} is a
-\code{bioregion.pairwise.metric} object obtained by running \code{similarity},
+\code{bioregion.pairwise} object obtained by running \code{similarity},
 or by running \code{similarity} followed by \code{similarity_to_dissimilarity}.
 }
 \details{

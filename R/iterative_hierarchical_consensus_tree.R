@@ -11,7 +11,7 @@ iterative_consensus_tree <- function(
     max_remaining_size = length(sites),
     monotonicity_direction = c("top-down", "bottom-up")) {
 
-  if(inherits(dissim, "bioregion.pairwise.metric") |
+  if(inherits(dissim, "bioregion.pairwise") |
      inherits(dissim, "data.frame")) {
     dissim[, 3] <- dissim[, index]
     dissim <- stats::as.dist(
@@ -178,6 +178,7 @@ stable_binary_split <- function(dist.obj,
     randomtrees[[run]]$hierartree <-  
       fastcluster::hclust(randomtrees[[run]]$dist.matrix, 
                           method = method)
+    randomtrees[[run]]$dist.matrix <- 0 # CHECK IF PROBLEM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
   
   # Step 2: cut trees at 2 clusters for each run

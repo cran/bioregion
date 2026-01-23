@@ -1,4 +1,4 @@
-#' Convert betapart dissimilarity to bioregion dissimilarity
+#' Convert betapart dissimilarity to bioregion dissimilarity (DEPRECATED)
 #'
 #' This function converts dissimilarity results produced by the betapart package
 #' (and packages using betapart, such as phyloregion) into a dissimilarity 
@@ -11,8 +11,11 @@
 #' using the `beta.pair` function).
 #' 
 #' @return 
-#' A dissimilarity object of class `bioregion.pairwise.metric`, 
+#' A dissimilarity object of class `bioregion.pairwise`, 
 #' compatible with the bioregion package.
+#' 
+#' @seealso 
+#' This function is deprecated, use [as_bioregion_pairwise] instead.
 #' 
 #' @author
 #' Boris Leroy (\email{leroy.boris@gmail.com}) \cr
@@ -29,8 +32,11 @@
 #' beta_div <- betapart::beta.pair.abund(comat)
 #' betapart_to_bioregion(beta_div)
 #' }
+#' 
 #' @export
 betapart_to_bioregion <- function(betapart_result) {
+  
+  .Deprecated("as_bioregion_pairwise")
   
   if (!inherits(betapart_result, "list")) {
     stop("betapart_result must be a valid object from the betapart package.",
@@ -62,7 +68,7 @@ betapart_to_bioregion <- function(betapart_result) {
   attr(result_df, "nb_sites") <- nb_sites
   attr(result_df, "nb_species") <- NA
   
-  class(result_df) <- append("bioregion.pairwise.metric", class(result_df))
+  class(result_df) <- append("bioregion.pairwise", class(result_df))
   
   return(result_df)
 }

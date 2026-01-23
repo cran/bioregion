@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Pierre Denelle, Boris Leroy and Maxime Lenormand" />
+
+<meta name="date" content="2026-01-23" />
+
+<title>5.3 Compare bioregionalizations</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">5.3 Compare bioregionalizations</h1>
+<h4 class="author">Pierre Denelle, Boris Leroy and Maxime Lenormand</h4>
+<h4 class="date">2026-01-23</h4>
+
+
+
+<p>In this vignette, we aim at comparing the assignment of sites into
+different bioregions across multiple bioregionalizations, using the
+function <code>compare_bioregionalizations()</code>.</p>
+<div id="data" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> 1. Data</h1>
+<p>We use the vegetation dataset that comes with
+<code>bioregion</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;vegedf&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;vegemat&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Calculation of (dis)similarity matrices</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>vegedissim <span class="ot">&lt;-</span> <span class="fu">dissimilarity</span>(vegemat, <span class="at">metric =</span> <span class="fu">c</span>(<span class="st">&quot;Simpson&quot;</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>vegesim <span class="ot">&lt;-</span> <span class="fu">dissimilarity_to_similarity</span>(vegedissim)</span></code></pre></div>
+</div>
+<div id="bioregionalization" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> 2.
+Bioregionalization</h1>
+<p>We use the same three bioregionalization algorithms as in the <a href="https://biorgeo.github.io/bioregion/articles/a5_1_visualization.html">visualization
+vignette</a>, i.e. a non-hierarchical, hierarchical and network
+bioregionalizations.<br />
+We chose 3 bioregions for the non-hierarchical and hierarchical
+bioregionalizations. <br></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Non hierarchical bioregionalization</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>vege_nhclu_kmeans <span class="ot">&lt;-</span> <span class="fu">nhclu_kmeans</span>(vegedissim, <span class="at">n_clust =</span> <span class="dv">3</span>, <span class="at">index =</span> <span class="st">&quot;Simpson&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>vege_nhclu_kmeans<span class="sc">$</span>cluster_info <span class="co"># 3</span></span></code></pre></div>
+<pre><code>##     partition_name n_clust
+## K_3            K_3       3</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Hierarchical bioregionalization</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>vege_hclu_hierarclust <span class="ot">&lt;-</span> <span class="fu">hclu_hierarclust</span>(<span class="at">dissimilarity =</span> vegedissim,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>                                          <span class="at">method =</span> <span class="st">&quot;mcquitty&quot;</span>, <span class="at">n_clust =</span> <span class="dv">3</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>                                          <span class="at">optimal_tree_method =</span> <span class="st">&quot;best&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>vege_hclu_hierarclust<span class="sc">$</span>cluster_info <span class="co"># 3</span></span></code></pre></div>
+<pre><code>##   partition_name n_clust requested_n_clust output_cut_height
+## 1            K_3       3                 3             0.625</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Network bioregionalization</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>vege_netclu_walktrap <span class="ot">&lt;-</span> <span class="fu">netclu_walktrap</span>(vegesim,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>                                        <span class="at">index =</span> <span class="fu">names</span>(vegesim)[<span class="dv">3</span>])</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>vege_netclu_walktrap<span class="sc">$</span>cluster_info <span class="co"># 3</span></span></code></pre></div>
+<pre><code>##     partition_name n_clust
+## K_3            K_3       3</code></pre>
+</div>
+<div id="compare-the-bioregionalizations" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> 3. Compare the
+bioregionalizations</h1>
+<p>Before comparing the bioregionalizations, we build a common
+<code>data.frame</code> containing the three distinct
+bioregionalizations. <br></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>comp <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">left_join</span>(vege_hclu_hierarclust<span class="sc">$</span>clusters,</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                         vege_netclu_walktrap<span class="sc">$</span>clusters,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                         <span class="at">by =</span> <span class="st">&quot;ID&quot;</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">colnames</span>(comp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;ID&quot;</span>, <span class="st">&quot;K_3_hclu&quot;</span>, <span class="st">&quot;K_3_netclu&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>comp <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">left_join</span>(comp,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                         vege_nhclu_kmeans<span class="sc">$</span>clusters,</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>                         <span class="at">by =</span> <span class="st">&quot;ID&quot;</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">colnames</span>(comp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;ID&quot;</span>, <span class="st">&quot;K_3_hclu&quot;</span>, <span class="st">&quot;K_3_netclu&quot;</span>, <span class="st">&quot;K_3_nhclu&quot;</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="fu">head</span>(comp)</span></code></pre></div>
+<pre><code>##     ID K_3_hclu K_3_netclu K_3_nhclu
+## 1  512        1          1         1
+## 2  799        1          3         1
+## 3  375        2          1         2
+## 4  476        2          1         2
+## 5  971        1          3         1
+## 6 1282        1          3         1</code></pre>
+<p>We can now run the function
+<code>compare_bioregionalizations()</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>hclu_vs_netclu <span class="ot">&lt;-</span> <span class="fu">compare_bioregionalizations</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">bioregionalizations =</span> comp[, <span class="fu">c</span>(<span class="st">&quot;K_3_hclu&quot;</span>, <span class="st">&quot;K_3_netclu&quot;</span>, <span class="st">&quot;K_3_nhclu&quot;</span>)],</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">store_pairwise_membership =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">cor_frequency =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">store_confusion_matrix =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="fu">str</span>(hclu_vs_netclu)</span></code></pre></div>
+<pre><code>## List of 7
+##  $ args                         :List of 4
+##   ..$ indices                  : chr [1:2] &quot;rand&quot; &quot;jaccard&quot;
+##   ..$ cor_frequency            : logi TRUE
+##   ..$ store_pairwise_membership: logi TRUE
+##   ..$ store_confusion_matrix   : logi TRUE
+##  $ inputs                       : Named int [1:2] 715 3
+##   ..- attr(*, &quot;names&quot;)= chr [1:2] &quot;number_items&quot; &quot;number_bioregionalizations&quot;
+##  $ pairwise_membership          : logi [1:255255, 1:3] TRUE FALSE FALSE TRUE TRUE TRUE ...
+##   ..- attr(*, &quot;dimnames&quot;)=List of 2
+##   .. ..$ : chr [1:255255] &quot;1_2&quot; &quot;1_3&quot; &quot;1_4&quot; &quot;1_5&quot; ...
+##   .. ..$ : chr [1:3] &quot;K_3_hclu&quot; &quot;K_3_netclu&quot; &quot;K_3_nhclu&quot;
+##  $ freq_item_pw_membership      : Named num [1:255255] 2 1 1 2 2 2 2 2 2 2 ...
+##   ..- attr(*, &quot;names&quot;)= chr [1:255255] &quot;1_2&quot; &quot;1_3&quot; &quot;1_4&quot; &quot;1_5&quot; ...
+##  $ bioregionalization_freq_cor  : Named num [1:3] 0.861 0.724 0.892
+##   ..- attr(*, &quot;names&quot;)= chr [1:3] &quot;K_3_hclu&quot; &quot;K_3_netclu&quot; &quot;K_3_nhclu&quot;
+##  $ confusion_matrix             :List of 3
+##   ..$ K_3_hclu%K_3_netclu : Named int [1:4] 63316 41892 36800 113247
+##   .. ..- attr(*, &quot;names&quot;)= chr [1:4] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot;
+##   ..$ K_3_hclu%K_3_nhclu  : Named int [1:4] 88132 17076 10871 139176
+##   .. ..- attr(*, &quot;names&quot;)= chr [1:4] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot;
+##   ..$ K_3_netclu%K_3_nhclu: Named int [1:4] 65388 34728 33615 121524
+##   .. ..- attr(*, &quot;names&quot;)= chr [1:4] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot;
+##  $ bioregionalization_comparison:&#39;data.frame&#39;:   3 obs. of  3 variables:
+##   ..$ bioregionalization_comparison: chr [1:3] &quot;K_3_hclu%K_3_netclu&quot; &quot;K_3_hclu%K_3_nhclu&quot; &quot;K_3_netclu%K_3_nhclu&quot;
+##   ..$ rand                         : num [1:3] 0.692 0.891 0.732
+##   ..$ jaccard                      : num [1:3] 0.446 0.759 0.489
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;bioregion.bioregionalization.comparison&quot; &quot;list&quot;</code></pre>
+<p><code>compare_bioregionalizations()</code> produces several outputs
+which: - look within each bioregionalization how sites are assigned to
+bioregions - compare different bioregionalizations by analysing whether
+they produce similar pairwise memberships</p>
+<p>Let’s first look at pairwise membership within
+bioregionalization.</p>
+<div id="pairwise-membership" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> 3.1 Pairwise
+membership</h2>
+<p>The number of pairwise combinations for <span class="math inline">\(n\)</span> sites equals <span class="math inline">\(n(n-1)/2\)</span>. So in our case, where we have
+715 sites, we do end up with 2.55255^{5} pairwise combinations.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">nrow</span>(hclu_vs_netclu<span class="sc">$</span>pairwise_membership) <span class="sc">==</span> <span class="fu">nrow</span>(comp)<span class="sc">*</span>(<span class="fu">nrow</span>(comp)<span class="sc">-</span><span class="dv">1</span>)<span class="sc">/</span><span class="dv">2</span></span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<p>Pairwise memberships look for each pairs of site whether they are
+assigned to the same or to a different bioregion. Let’s look at the
+sites 1 and 9 across the different bioregionalization:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>comp[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">9</span>), ]</span></code></pre></div>
+<pre><code>##    ID K_3_hclu K_3_netclu K_3_nhclu
+## 1 512        1          1         1
+## 9 948        1          3         1</code></pre>
+<p>We can see that the sites 1 and 9 are classified in the same
+bioregion in the first two bioregionalizations, but not in the third
+one.<br />
+The <code>$pairwise_membership</code> output of
+<code>compare_bioregionalizations()</code> shows this as a
+<code>TRUE/FALSE</code> statement.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>hclu_vs_netclu<span class="sc">$</span>pairwise_membership[<span class="dv">8</span><span class="sc">:</span><span class="dv">10</span>, ]</span></code></pre></div>
+<pre><code>##      K_3_hclu K_3_netclu K_3_nhclu
+## 1_9      TRUE      FALSE      TRUE
+## 1_10     TRUE      FALSE      TRUE
+## 1_11     TRUE      FALSE      TRUE</code></pre>
+<p>The number of times each pair of sites are clustered together
+(i.e. the sum of rows of the table in <code>$pairwise_membership</code>)
+is available in the <code>$freq_item_pw_membership</code> output:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>hclu_vs_netclu<span class="sc">$</span>freq_item_pw_membership[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">8</span>)]</span></code></pre></div>
+<pre><code>## 1_2 1_9 
+##   2   2</code></pre>
+<p>The sites 1 and 2 were never classified in the same bioregion across
+the three bioregionalizations. Sites 1 and 9 were classified in the same
+bioregion in two bioregionalizations. If we look at the total
+frequencies:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">table</span>(hclu_vs_netclu<span class="sc">$</span>freq_item_pw_membership)</span></code></pre></div>
+<pre><code>## 
+##      0      1      2      3 
+## 110955  41082  46409  56809</code></pre>
+<p>we see that the most dominant situation is when sites are never
+assigned to the same bioregion.</p>
+</div>
+<div id="confusion-matrix" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> 3.2 Confusion
+matrix</h2>
+<p>The confusion matrix allows to compare different bioregionalizations
+by looking at the similarity of their pairwise memberships. To do so,
+the function computes a confusion matrix with four elements:</p>
+<p>. <span class="math inline">\(a\)</span> number of pairs of sites
+grouped in bioregionalization 1 and in bioregionalization 2 . <span class="math inline">\(b\)</span> number of pairs of sites grouped in
+bioregionalization 1 but not in bioregionalization 2 . <span class="math inline">\(c\)</span> number of pairs of sites not grouped in
+bioregionalization 1 but grouped in bioregionalization 2 . <span class="math inline">\(d\)</span> number of pairs of sites not grouped in
+both bioregionalization 1 &amp; 2</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>hclu_vs_netclu<span class="sc">$</span>confusion_matrix</span></code></pre></div>
+<pre><code>## $`K_3_hclu%K_3_netclu`
+##      a      b      c      d 
+##  63316  41892  36800 113247 
+## 
+## $`K_3_hclu%K_3_nhclu`
+##      a      b      c      d 
+##  88132  17076  10871 139176 
+## 
+## $`K_3_netclu%K_3_nhclu`
+##      a      b      c      d 
+##  65388  34728  33615 121524</code></pre>
+<p>Based on the confusion matrices, we can compute a range of indices to
+indicate the agreement among bioregionalizations. As of now, we have
+implemented:<br />
+<br> <em>Rand index</em> <span class="math inline">\((a+d)/(a+b+c+d)\)</span> The Rand index measures
+agreement among bioregionalizations by accounting for both the pairs of
+sites that are grouped, but also the pairs of sites that are not
+grouped.<br />
+<br> <em>Jaccard index </em> <span class="math inline">\(a/(a+b+c)\)</span> The Jaccard index measures
+agreement among bioregionalizations by only accounting for pairs of
+sites that are grouped.</p>
+<p>These two metrics are complementary, because the Jaccard index will
+tell if bioregionalizations are similar in their clustering structure,
+whereas the Rand index will tell if bioregionalizations are similar not
+only in the pairs of items clustered together, but also in terms of the
+pairs of sites that are not clustered together. For example, take two
+bioregionalizations which never group together the same pairs of sites.
+Their Jaccard index will be 0, whereas the Rand index can be &gt; 0 due
+to the sites that are not grouped together.</p>
+<p>Additional indices can be manually computed by the users on the basis
+of the list of confusion matrices.</p>
+<p>In some cases, users may be interested in finding which of the
+bioregionalizations is most representative of all bioregionalizations To
+find it out, we can compare the pairwise membership of each
+bioregionalization with the total frequency of pairwise membership
+across all bioregionalizations. This correlation can be requested with
+<code>cor_frequency = TRUE</code>.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>hclu_vs_netclu<span class="sc">$</span>bioregionalization_freq_cor</span></code></pre></div>
+<pre><code>##   K_3_hclu K_3_netclu  K_3_nhclu 
+##  0.8614781  0.7244471  0.8919050</code></pre>
+<p>Here the third bioregionalization is the most representative of all
+bioregionalizations.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
