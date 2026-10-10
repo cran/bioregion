@@ -1,7 +1,7 @@
 Package: bioregion
 Type: Package
 Title: Comparison of Bioregionalization Methods
-Version: 1.4.0
+Version: 1.5.0
 Authors@R: 
     c(person(given = "Maxime",
               family = "Lenormand",
@@ -27,24 +27,24 @@ LazyData: true
 Imports: ape, apcluster, bipartite, cluster, data.table, dbscan,
         dynamicTreeCut, fastcluster, fastkmedoids, ggplot2, grDevices,
         httr, igraph, mathjaxr, Matrix, phangorn, rcartocolor, Rdpack,
-        rlang, rmarkdown, segmented, sf, stats, tidyr, utils
+        rlang, rmarkdown, segmented, sf, stats, tidyr, utils, vegan
 RdMacros: mathjaxr, Rdpack
 LinkingTo: Rcpp
 Suggests: ade4, adespatial, betapart, dplyr, ecodist, knitr,
-        microbenchmark, rnaturalearth, rnaturalearthdata, terra,
-        testthat (>= 3.0.0), vegan
+        microbenchmark, parallel, rnaturalearth, rnaturalearthdata,
+        terra, testthat (>= 3.0.0)
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
 URL: https://github.com/bioRgeo/bioregion,
         https://bioRgeo.github.io/bioregion/
 BugReports: https://github.com/bioRgeo/bioregion/issues
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1
 NeedsCompilation: yes
-Packaged: 2026-03-29 09:45:16 UTC; maxime
+Packaged: 2026-10-10 17:50:12 UTC; maxime
 Author: Maxime Lenormand [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6362-3473>),
   Boris Leroy [aut] (ORCID: <https://orcid.org/0000-0002-7686-4302>),
   Pierre Denelle [aut] (ORCID: <https://orcid.org/0000-0001-5037-2281>)
 Maintainer: Maxime Lenormand <maxime.lenormand@inrae.fr>
 Repository: CRAN
-Date/Publication: 2026-03-29 15:50:22 UTC
+Date/Publication: 2026-10-10 18:10:02 UTC

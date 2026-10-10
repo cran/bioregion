@@ -6,9 +6,9 @@
 #' important clusters (based on size), grey shades to less important clusters,
 #' and optionally black to insignificant clusters.
 #'
-#' @param clusters An object of class `bioregion.clusters`, typically output
-#' from clustering functions such as [netclu_infomap()], [hclu_hierarclust()],
-#' or [nhclu_pam()].
+#' @param bioregionalization An object of class `bioregion.clusters`, typically
+#' output from clustering functions such as [netclu_infomap()],
+#' [hclu_hierarclust()], or [nhclu_pam()].
 #' 
 #' @param palette A `character` string indicating which color palette from
 #' `rcartocolor` to use. Default is `"Vivid"`. Other qualitative palettes 
@@ -28,6 +28,8 @@
 #' `cluster_ordering` criterion) are considered insignificant and colored
 #' black, reducing visual clutter on maps. If `NULL`, all clusters receive
 #' distinct colors.
+#'
+#' @param clusters Deprecated. Use `bioregionalization` instead.
 #' 
 #' @return 
 #' A modified `bioregion.clusters` object with two additional elements:
@@ -57,10 +59,12 @@
 #' 
 #' Remaining clusters are ranked by the `cluster_ordering` criterion:
 #' \itemize{
-#'   \item **Top clusters** (up to 12): Receive distinct colors from the chosen
-#'     palette. This limit is because above 12 the human eye struggles to 
-#'     distinguish between colors.
-#'   \item **Remaining clusters** (beyond top 12): Receive shades of grey from
+#'   \item **Top clusters** (up to 11 for qualitative CARTO palettes, or the
+#'     palette maximum for other palettes): Receive distinct colors from the
+#'     chosen palette. For the qualitative palettes (`"Vivid"`, `"Bold"`,
+#'     `"Prism"`, `"Safe"`, `"Antique"`, `"Pastel"`), the 12th color is
+#'     always a grey/neutral tone and is automatically excluded.
+#'   \item **Remaining clusters**: Receive shades of grey from
 #'     light (#CCCCCC) to dark (#404040), maintaining visual distinction but
 #'     with less prominence.
 #' }
@@ -130,21 +134,31 @@
 #' }
 #' 
 #' @export
-bioregion_colors <- function(clusters,
+bioregion_colors <- function(bioregionalization,
                              palette = "Vivid",
                              cluster_ordering = "n_sites",
-                             cutoff_insignificant = NULL) {
-  
-  # 1. Input validation --------------------------------------------------------
-  
-  # Check that clusters is a bioregion.clusters object
-  if (!inherits(clusters, "bioregion.clusters")) {
-    stop("clusters must be a bioregion.clusters object.", call. = FALSE)
+                             cutoff_insignificant = NULL,
+                             clusters = NULL) {
+
+  # Deprecated arguments
+  if (!is.null(clusters)) {
+    stop("clusters is deprecated. It has been replaced by bioregionalization.",
+         call. = FALSE)
   }
-  
-  # Check that clusters has a clusters element
-  if (is.null(clusters$clusters) || !inherits(clusters$clusters, "data.frame")) {
-    stop("clusters object must contain a clusters data.frame.", call. = FALSE)
+
+  # 1. Input validation --------------------------------------------------------
+
+  # Check that bioregionalization is a bioregion.clusters object
+  if (!inherits(bioregionalization, "bioregion.clusters")) {
+    stop("bioregionalization must be a bioregion.clusters object.",
+         call. = FALSE)
+  }
+
+  # Check that bioregionalization has a clusters element
+  if (is.null(bioregionalization$clusters) ||
+      !inherits(bioregionalization$clusters, "data.frame")) {
+    stop("bioregionalization object must contain a clusters data.frame.",
+         call. = FALSE)
   }
   
   # Validate palette parameter
@@ -168,7 +182,7 @@ bioregion_colors <- function(clusters,
   
   # Check bipartite requirements for n_species and n_both
   if (cluster_ordering %in% c("n_species", "n_both")) {
-    if (is.null(clusters$inputs$bipartite) || !clusters$inputs$bipartite) {
+    if (is.null(bioregionalization$inputs$bipartite) || !bioregionalization$inputs$bipartite) {
       stop(paste0("cluster_ordering '", cluster_ordering, 
                   "' can only be used with bipartite clustering."),
            call. = FALSE)
@@ -188,13 +202,13 @@ bioregion_colors <- function(clusters,
   # 2. Extract cluster information ---------------------------------------------
   
   # Get cluster columns (exclude first column which is ID)
-  cluster_cols <- clusters$clusters[, 2:ncol(clusters$clusters), drop = FALSE]
+  cluster_cols <- bioregionalization$clusters[, 2:ncol(bioregionalization$clusters), drop = FALSE]
   nb_partitions <- ncol(cluster_cols)
   partition_names <- names(cluster_cols)
   
   # Initialize list to store colors for each partition
   colors_list <- list()
-  clusters_colors <- clusters$clusters
+  clusters_colors <- bioregionalization$clusters
   
   # Process each partition separately
   for (part_idx in seq_len(nb_partitions)) {
@@ -218,7 +232,7 @@ bioregion_colors <- function(clusters,
     } else if (cluster_ordering == "n_species") {
       # For bipartite networks, count species in each cluster
       # Need to access node_type attribute
-      node_type <- attr(clusters$clusters, "node_type")
+      node_type <- attr(bioregionalization$clusters, "node_type")
       if (is.null(node_type)) {
         warning(paste0("node_type attribute not found in clusters object. ",
                        "Falling back to n_sites ordering."))
@@ -266,7 +280,22 @@ bioregion_colors <- function(clusters,
     
     # 6. Assign colors ---------------------------------------------------------
     
-    max_vivid_colors <- 12
+    # Some CARTO qualitative palettes (Vivid, Bold, Prism, Safe, Antique,
+    # Pastel) always include a grey/neutral tone as their last color.
+    # For these palettes we request n+1 colors and drop the last one so
+    # that only vivid, distinguishable colors are assigned.
+    grey_palettes <- c("Vivid", "Bold", "Prism", "Safe", "Antique", "Pastel")
+    has_trailing_grey <- palette %in% grey_palettes
+    
+    if (has_trailing_grey) {
+      # Max usable vivid colors is 11 (12 minus the trailing grey)
+      max_vivid_colors <- 11L
+    } else {
+      # For other palettes, use all available colors
+      max_palette <- length(rcartocolor::carto_pal(name = palette))
+      max_vivid_colors <- max_palette
+    }
+    
     nb_significant <- length(ranked_clusters)
     
     # Initialize colors data frame for this partition
@@ -290,13 +319,18 @@ bioregion_colors <- function(clusters,
     if (nb_significant > 0) {
       if (nb_significant <= max_vivid_colors) {
         # All significant clusters get vivid colors
-        # rcartocolor requires at least 3 colors, so we handle small cases
-        if (nb_significant < 3) {
-          # For 1-2 clusters, get 3 colors and use the first ones
-          all_vivid_colors <- rcartocolor::carto_pal(n = 3, name = palette)
-          vivid_colors <- all_vivid_colors[1:nb_significant]
+        if (has_trailing_grey) {
+          # Request one extra color and drop the trailing grey
+          n_request <- min(nb_significant + 1L, 12L)
+          vivid_colors <- rcartocolor::carto_pal(n = n_request, 
+                                                 name = palette)
+          vivid_colors <- vivid_colors[-length(vivid_colors)]
+          vivid_colors <- vivid_colors[seq_len(nb_significant)]
         } else {
-          vivid_colors <- rcartocolor::carto_pal(n = nb_significant, name = palette)
+          n_request <- max(nb_significant, 3L)
+          vivid_colors <- rcartocolor::carto_pal(n = n_request, 
+                                                 name = palette)
+          vivid_colors <- vivid_colors[seq_len(nb_significant)]
         }
         significant_colors <- data.frame(
           cluster = ranked_clusters,
@@ -306,11 +340,18 @@ bioregion_colors <- function(clusters,
         partition_colors_df <- rbind(partition_colors_df, significant_colors)
         
       } else {
-        # Top 12 get vivid colors, rest get grey shades
-        vivid_colors <- rcartocolor::carto_pal(n = max_vivid_colors, name = palette)
+        # Top clusters get vivid colors, rest get grey shades
+        if (has_trailing_grey) {
+          all_palette_colors <- rcartocolor::carto_pal(n = 12, 
+                                                       name = palette)
+          all_palette_colors <- all_palette_colors[-length(all_palette_colors)]
+        } else {
+          all_palette_colors <- rcartocolor::carto_pal(
+            n = max_vivid_colors, name = palette)
+        }
         top_colors <- data.frame(
-          cluster = ranked_clusters[1:max_vivid_colors],
-          color = vivid_colors,
+          cluster = ranked_clusters[seq_len(max_vivid_colors)],
+          color = all_palette_colors,
           stringsAsFactors = FALSE
         )
         
@@ -327,12 +368,22 @@ bioregion_colors <- function(clusters,
           stringsAsFactors = FALSE
         )
         
-        partition_colors_df <- rbind(partition_colors_df, top_colors, remaining_colors)
+        partition_colors_df <- rbind(partition_colors_df, top_colors, 
+                                    remaining_colors)
       }
     }
     
     # Ensure cluster column is character
     partition_colors_df$cluster <- as.character(partition_colors_df$cluster)
+    
+    # Reorder by cluster ID (numeric order if possible, otherwise 
+    # alphabetical)
+    cluster_order <- tryCatch(
+      order(as.numeric(partition_colors_df$cluster)),
+      warning = function(w) order(partition_colors_df$cluster)
+    )
+    partition_colors_df <- partition_colors_df[cluster_order, , drop = FALSE]
+    rownames(partition_colors_df) <- NULL
     
     # Store colors for this partition
     colors_list[[partition_name]] <- partition_colors_df
@@ -365,10 +416,10 @@ bioregion_colors <- function(clusters,
   
   # 8. Add new elements to clusters object -------------------------------------
   
-  clusters$colors <- colors_list
-  clusters$clusters_colors <- clusters_colors
-  
+  bioregionalization$colors <- colors_list
+  bioregionalization$clusters_colors <- clusters_colors
+
   # 9. Return enhanced object --------------------------------------------------
-  
-  return(clusters)
+
+  return(bioregionalization)
 }
